@@ -1431,8 +1431,8 @@ void split_audio_on_markers(GtkWidget * widget, gpointer data)
     if ((file_processing == FALSE) && (file_is_open == TRUE)
 	&& (audio_playback == FALSE) && (cursor_playback == FALSE)) {
 	int i = 0 ;
-	int first = -1 ;
-	int trackno = 1 ;
+	//int first = -1 ;
+	unsigned int trackno = 1 ;
 
 	long first_sample = 0 ;
 	long last_sample = song_markers[0] ;
@@ -1457,14 +1457,14 @@ void split_audio_on_markers(GtkWidget * widget, gpointer data)
 	    char filename[100] ;
 
 	    if(trackno < 10) {
-		snprintf(filename,99,"track0%d.cdda.wav",trackno) ;
+		snprintf(filename,99,"track0%u.cdda.wav",trackno) ;
 	    } else {
-		snprintf(filename,99,"track%d.cdda.wav",trackno) ;
+		snprintf(filename,99,"track%u.cdda.wav",trackno) ;
 	    }
 
 	    if(last_sample-first_sample >= 10000) {
 		save_as_wavfile(filename, first_sample, last_sample) ;
-		printf("Save as wavfile %s %d->%d\n", filename, first_sample, last_sample) ;
+		printf("Save as wavfile %s %ld->%ld\n", filename, first_sample, last_sample) ;
 		trackno++ ;
 	    }
 
@@ -1805,8 +1805,7 @@ void open_wave_filename(void)
 {
     char tmp[PATH_MAX+1];
 
-
-    int l;
+    //int l;
     struct sound_prefs tmp_prefs;
 
     gnome_flush();
@@ -1829,8 +1828,6 @@ void open_wave_filename(void)
     strcpy(tmp, wave_filename);
     strcat(pathname, basename(tmp));
     
-    l = strlen(wave_filename);
-
     if (is_valid_audio_file(wave_filename)) {
 	tmp_prefs = open_wavefile((char *) wave_filename, &audio_view);
 	if (tmp_prefs.successful_open) {
@@ -1886,84 +1883,6 @@ void open_wave_filename(void)
     }
 }
 
-void old_open_wave_filename(void)
-{
-    char tmp[PATH_MAX+1];
-
-    gnome_flush();
-
-    /* all this to store the last directory where a file was opened */
-    strcpy(tmp, wave_filename);
-    strcpy(pathname, dirname(tmp));
-    strcat(pathname, "/");
-
-    strcpy(tmp, wave_filename);
-    strcat(pathname, basename(tmp));
-
-    {
-	int l;
-	struct sound_prefs tmp_prefs;
-
-	cleanup_and_close(&audio_view, &prefs);
-
-	l = strlen(wave_filename);
-
-	if (is_valid_audio_file(wave_filename)) {
-	    tmp_prefs = open_wavefile((char *) wave_filename, &audio_view);
-	    if (tmp_prefs.successful_open) {
-		prefs = tmp_prefs;
-		spectral_view_flag = FALSE;
-		if (prefs.wavefile_fd != -1) {
-    #ifdef TRUNCATE_OLD
-		    audio_view.truncate_head = 0;
-		    audio_view.truncate_tail = (prefs.n_samples - 1);
-    #endif /* TRUNCATE_OLD */
-		    audio_view.n_samples = prefs.n_samples;
-		    if (audio_view.first_sample == -1) {
-			audio_view.first_sample = 0;
-			audio_view.last_sample = (prefs.n_samples - 1);
-		    } else {
-			audio_view.first_sample =
-			    MIN(prefs.n_samples - 1,
-				audio_view.first_sample);
-			audio_view.first_sample =
-			    MAX(0, audio_view.first_sample);
-			audio_view.last_sample =
-			    MIN(prefs.n_samples - 1,
-				audio_view.last_sample);
-			audio_view.last_sample =
-			    MAX(0, audio_view.last_sample);
-		    }
-		    audio_view.selection_region = FALSE;
-		    file_is_open = TRUE;
-		    fill_sample_buffer(&prefs);
-
-		    /* display entire file data if this file changed since last edit session */
-		    if (strcmp(wave_filename, last_filename)) {
-			audio_view.first_sample = 0;
-			audio_view.last_sample = prefs.n_samples - 1;
-			strcpy(last_filename, wave_filename);
-			num_song_markers = 0;
-		    }
-
-		    set_scroll_bar(prefs.n_samples - 1,
-				   audio_view.first_sample,
-				   audio_view.last_sample);
-		    main_redraw(FALSE, TRUE);
-		} else {
-		    file_is_open = FALSE;
-		    warning("failed to open audio file");
-		}
-	    } else {
-		strcpy(wave_filename, last_filename);
-	    }
-	} else {
-	    file_is_open = FALSE;
-	    warning("No file selected, or file format not recognized");
-	}
-    }
-}
-
 void store_filename(GtkFileSelection * selector, gpointer user_data)
 {
     strncpy(wave_filename,
@@ -1983,13 +1902,7 @@ void store_filename(GtkFileSelection * selector, gpointer user_data)
 					   (file_selector)), PATH_MAX);
 
     if (strcmp(save_selection_filename, wave_filename)) {
-	int l;
-
-	l = strlen(save_selection_filename);
-
-
 	save_selection_as_wavfile(save_selection_filename, &audio_view);
-
     } else {
 	warning("Cannot save selection over the currently open file!");
     }
@@ -2051,8 +1964,7 @@ void save_selection_as_encoded(int fmt, char *filename, char *filename_new, stru
 void store_selected_filename_as_encoded(GtkFileSelection * selector,
 				    gpointer user_data)
 {
-    int enc_format = NULL ;
-    int l;
+    int enc_format = 0 ;
     char trackname[1024] = "" ;
 
     if (encoding_type == GWC_OGG) enc_format = OGG_FMT ;
@@ -2066,10 +1978,7 @@ void store_selected_filename_as_encoded(GtkFileSelection * selector,
     gtk_widget_destroy(file_selector);
 
     if(!prompt_user("Enter the trackname:", trackname, 1023)) {
-	l = strlen(save_selection_filename);
-
 	file_processing = TRUE;
-
 	save_selection_as_encoded(enc_format, wave_filename,
 				  save_selection_filename,
 				  &audio_view, trackname);
@@ -2899,15 +2808,13 @@ GtkWidget *transport_toolbar;
 
 int main(int argc, char *argv[])
 {
-    /* GtkWidget is the storage type for widgets */
-    GnomeProgram *gwc_app ;
+    printf("starting... ");
 
-    GtkWidget *main_vbox, *led_vbox, *led_sub_vbox, *track_times_vbox,
-	*times_vbox, *bottom_hbox;
+
+    
+    GtkWidget *main_vbox, *led_vbox, *track_times_vbox,	*times_vbox, *bottom_hbox;
     GtkWidget *detect_only_box;
     GtkWidget *leave_click_marks_box;
-
-
 
     int i;
 
@@ -2920,7 +2827,6 @@ int main(int argc, char *argv[])
      *  operation requires about 3.5MB,  so I picked an arbitrary 4MB
      *  stack size.  This might not be sufficient for some other operations.
      */
-
     {
 	struct  rlimit   rl;
 
@@ -2955,7 +2861,7 @@ int main(int argc, char *argv[])
     #define PREFIX "."
     #define SYSCONFDIR "."
 
-    gwc_app = gnome_program_init(APPNAME, VERSION, LIBGNOMEUI_MODULE, argc, argv,
+    gnome_program_init(APPNAME, VERSION, LIBGNOMEUI_MODULE, argc, argv,
 		       GNOME_PARAM_POPT_TABLE, NULL,
 		       GNOME_PROGRAM_STANDARD_PROPERTIES, NULL);
 
@@ -3006,7 +2912,6 @@ int main(int argc, char *argv[])
     track_times_vbox = gtk_vbox_new(FALSE, 1);
     times_vbox = gtk_vbox_new(FALSE, 1);
     led_vbox = gtk_vbox_new(FALSE, 1);
-    led_sub_vbox = gtk_vbox_new(TRUE, 1);
     bottom_hbox = gtk_hbox_new(FALSE, 1);
 
     /* This packs the button into the window (a gtk container). */
