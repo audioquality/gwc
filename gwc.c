@@ -38,7 +38,7 @@
 #include <libgnomeui/libgnomeui.h>
 #include <libgnomeui/gnome-window-icon.h> /* gnome_window_icon_set_default_from_file
                                            * ...frank 31.08.03  */
-#include "gtkledbar.h"
+//#include "gtkledbar.h"
 #include "encoding.h"
 #include "soundfile.h"
 #include "audio_edit.h"
@@ -88,6 +88,13 @@ GtkWidget *l_selected_time;
 GtkWidget *l_last_time;
 GtkWidget *l_samples;
 
+/* toolbars */
+GtkWidget *status_bar;
+GtkWidget *edit_toolbar;
+GtkWidget *transport_toolbar;
+/* The file selection widget */
+GtkWidget *file_selector;
+
 struct sound_prefs prefs;
 struct denoise_prefs denoise_prefs;
 struct encoding_prefs encoding_prefs;
@@ -132,7 +139,10 @@ gint doing_statusbar_update = FALSE;
 DENOISE_DATA denoise_data = { 0, 0, 0, 0, FALSE };
 
 gint debug = 0;
+static int audio_debug = 1;
 
+/* string to store the chosen filename */
+gchar *selected_filename;
 gchar save_selection_filename[PATH_MAX+1];
 gchar wave_filename[PATH_MAX+1];
 gchar last_filename[PATH_MAX+1];
@@ -142,13 +152,9 @@ long n_markers = 0;
 long num_song_markers = 0;
 long song_markers[MAX_MARKERS];
 
-/* The file selection widget and the string to store the chosen filename */
-
-GtkWidget *file_selector;
-gchar *selected_filename;
 gint file_is_open = FALSE;
 gint file_processing = FALSE;
-int stop_playback_force = 1 ;
+int stop_playback_force = 1;
 
 void d_print(char *fmt, ...)
 {
@@ -158,8 +164,6 @@ void d_print(char *fmt, ...)
 	vprintf(fmt, ap);
     }
 }
-
-static int audio_debug = 0 ;
 
 void usage(char *prog)
 {
@@ -230,8 +234,7 @@ static int is_region_selected(void)
     }
     return 1;
 }
-#endif /* !TRUNCATE_OLD */
-
+#endif
 
 void append_cdrdao(struct view *v)
 {
@@ -347,11 +350,11 @@ void load_preferences(void)
     prefs.bits = gnome_config_get_int("bits=16");
     prefs.stereo = gnome_config_get_int("stereo=1");
     audio_view.first_sample =
-	gnome_config_get_int("first_sample_viewed=-1");
+    gnome_config_get_int("first_sample_viewed=-1");
     audio_view.last_sample = gnome_config_get_int("last_sample_viewed=-1");
     num_song_markers = 0;
     audio_view.channel_selection_mask =
-	gnome_config_get_int("channel_selection_mask=0");
+    gnome_config_get_int("channel_selection_mask=0");
     weak_declick_sensitivity = gnome_config_get_float("weak_declick_sensitivity=1.0");
     strong_declick_sensitivity = gnome_config_get_float("strong_declick_sensitivity=0.75");
     declick_iterate_flag = gnome_config_get_int("declick_iterate=0");
@@ -362,19 +365,15 @@ void load_preferences(void)
     decrackle_window = gnome_config_get_int("decrackle_window=2000");
     decrackle_average = gnome_config_get_int("decrackle_average=3");
     stop_key_highlight_interval =
-	gnome_config_get_float("stop_key_highlight_interval=0.5");
+    gnome_config_get_float("stop_key_highlight_interval=0.5");
     song_key_highlight_interval =
-	gnome_config_get_float("song_key_highlight_interval=15");
+    gnome_config_get_float("song_key_highlight_interval=15");
     song_mark_silence = gnome_config_get_float("song_mark_silence=2.0");
     sonogram_log = gnome_config_get_float("sonogram_log=0");
 
 /*      audio_view.truncate_tail = gnome_config_get_int("truncate_tail=-1") ;  */
 /*      audio_view.truncate_head = gnome_config_get_int("truncate_head=-1") ;  */
-#ifdef HAVE_ALSA
-    strcpy(audio_device, gnome_config_get_string("audio_device=plughw:0,0"));
-#else
-    strcpy(audio_device, gnome_config_get_string("audio_device=/dev/dsp"));
-#endif
+    strcpy(audio_device, gnome_config_get_string("audio_device"));
     gnome_config_pop_prefix();
 }
 
@@ -388,8 +387,7 @@ void save_preferences(void)
     gnome_config_set_int("stereo", prefs.stereo);
     gnome_config_set_int("first_sample_viewed", audio_view.first_sample);
     gnome_config_set_int("last_sample_viewed", audio_view.last_sample);
-    gnome_config_set_int("channel_selection_mask",
-			 audio_view.channel_selection_mask);
+    gnome_config_set_int("channel_selection_mask", audio_view.channel_selection_mask);
     gnome_config_set_float("weak_declick_sensitivity", weak_declick_sensitivity);
     gnome_config_set_float("strong_declick_sensitivity", strong_declick_sensitivity);
     gnome_config_set_int("declick_iterate", declick_iterate_flag);
@@ -399,10 +397,8 @@ void save_preferences(void)
     gnome_config_set_float("decrackle_level", decrackle_level);
     gnome_config_set_int("decrackle_window", decrackle_window);
     gnome_config_set_int("decrackle_average", decrackle_average);
-    gnome_config_set_float("stop_key_highlight_interval",
-			   stop_key_highlight_interval);
-    gnome_config_set_float("song_key_highlight_interval",
-			   song_key_highlight_interval);
+    gnome_config_set_float("stop_key_highlight_interval", stop_key_highlight_interval);
+    gnome_config_set_float("song_key_highlight_interval", song_key_highlight_interval);
     gnome_config_set_float("song_mark_silence", song_mark_silence);
     gnome_config_set_int("sonogram_log", sonogram_log);
     gnome_config_set_string("audio_device", audio_device);
@@ -458,17 +454,17 @@ int yesnocancel(char *msg)
     GtkWidget *dlg, *text;
     gint dres;
 
-    dlg =
-	gtk_dialog_new_with_buttons("Question",
-				    NULL,
-				    GTK_DIALOG_DESTROY_WITH_PARENT,
-				    GTK_STOCK_YES,
-				    GTK_RESPONSE_YES,
-				    GTK_STOCK_NO,
-				    GTK_RESPONSE_NO,
-				    GTK_STOCK_CANCEL,
-				    GTK_RESPONSE_CANCEL,
-				    NULL);
+    dlg = gtk_dialog_new_with_buttons(
+	"Question",
+	NULL,
+	GTK_DIALOG_DESTROY_WITH_PARENT,
+	GTK_STOCK_YES,
+	GTK_RESPONSE_YES,
+	GTK_STOCK_NO,
+	GTK_RESPONSE_NO,
+	GTK_STOCK_CANCEL,
+	GTK_RESPONSE_CANCEL,
+	NULL);
 
     text = gtk_label_new(msg);
     gtk_widget_show(text);
@@ -1037,8 +1033,8 @@ void stop_all_playback_functions(GtkWidget * widget, gpointer data)
 
     cursor_playback = FALSE;
     audio_playback = FALSE;
-    led_bar_light_percent(dial[0], 0.0);
-    led_bar_light_percent(dial[1], 0.0);
+    //led_bar_light_percent(dial[0], 0.0);
+    //led_bar_light_percent(dial[1], 0.0);
 }
 
 /* This is a callback function. The data arguments are ignored
@@ -1064,12 +1060,8 @@ gint play_a_block(gpointer data)
     get_region_of_interest(&first, &last, &audio_view);
 
     if (audio_playback == TRUE) {
-
-	if (process_audio(&l, &r) == 0) {
-	    led_bar_light_percent(dial[0], l);
-	    led_bar_light_percent(dial[1], r);
-	} else {
-	    d_print("process_audio returns nonzero.\n");
+	if (process_audio(&l, &r) != 0) {
+	  d_print("process_audio returns nonzero.\n");
 	}
     }
 
@@ -1083,7 +1075,6 @@ gint play_a_block(gpointer data)
 	stop_all_playback_functions(NULL, NULL) ;
 	stop_playback_force = 1 ;
     }
-
 
     return (TRUE);
 }
@@ -1140,52 +1131,44 @@ gint update_cursor(gpointer data)
     return (TRUE);
 }
 
-/* This is a callback function. The data arguments are ignored
-* in this example. More on callbacks below. */
+/* Play audio */
 void start_gwc_playback(GtkWidget * widget, gpointer data)
-{				/* Play audio */
+{
     long millisec_per_block;
 
-    audio_debug_print("entering start_gwc_playback with audio_playback=%d\n", audio_playback) ;
+    audio_debug_print("entering start_gwc_playback with audio_playback = %d\n", audio_playback) ;
 
     if (file_is_open == TRUE && file_processing == FALSE
 	&& audio_playback == FALSE && cursor_playback == FALSE) {
-
+	  
 	playback_samples_per_block = start_playback(audio_device, &audio_view, &prefs, 0.10, 0.25);
-
-	if(playback_samples_per_block < 1)
+	
+	audio_debug_print("playback device: %s\n", audio_device) ;
+	audio_debug_print("playback_samples_per_block = %ld\n", playback_samples_per_block) ;
+	
+	if (playback_samples_per_block < 1)
 	    return ; // an error occured
 
 	audio_playback = TRUE;
-	audio_debug_print("playback_samples_per_block=%ld\n", playback_samples_per_block) ;
 
-	if (audio_playback == TRUE) {
-	    millisec_per_block =
-		playback_samples_per_block * 1000 / prefs.rate;
-	    cursor_samples_per_playback_block =
-		(millisec_per_block - 5) * prefs.rate / 1000;
-	    {
-		long margin = 50;
+	millisec_per_block = playback_samples_per_block * 1000 / prefs.rate;
+	cursor_samples_per_playback_block = (millisec_per_block - 5) * prefs.rate / 1000;
+	{
+	    long margin = 50;
 
-		if (millisec_per_block < 100)
-		    margin = millisec_per_block / 2;
+	    if (millisec_per_block < 100)
+		margin = millisec_per_block / 2;
 
-		audio_debug_print("start_gwc_playback starting playback timers\n") ;
+	    audio_debug_print("start_gwc_playback starting playback timers\n") ;
 
-		playback_timer =
-		    gtk_timeout_add(millisec_per_block - margin,
-				    play_a_block, NULL);
-		cursor_playback = TRUE;
-		prev_cursor_millisec = millisec_per_block - margin;
-		cursor_timer = gtk_timeout_add(50, update_cursor, NULL);
-	    }
-	    play_a_block(NULL);
-	} else {
-	    /* not enough samples played to get more than 1 block
-	       in the buffer, no point in drawing cursor now,
-	       the audio data is not available to dump to the audio
-	       device now! */
+	    playback_timer =
+		gtk_timeout_add(millisec_per_block - margin,
+				play_a_block, NULL);
+	    cursor_playback = TRUE;
+	    prev_cursor_millisec = millisec_per_block - margin;
+	    cursor_timer = gtk_timeout_add(50, update_cursor, NULL);
 	}
+	play_a_block(NULL);
     }
 
     audio_debug_print("leaving start_gwc_playback with audio_playback=%d\n", audio_playback) ;
@@ -2295,8 +2278,6 @@ GnomeUIInfo help_menu_old[] = {
 	   GNOMEUIINFO_END
       };
 
-
-
 GnomeUIInfo menubar[] = {
     GNOMEUIINFO_MENU_FILE_TREE(file_menu),
     GNOMEUIINFO_MENU_EDIT_TREE(edit_menu),
@@ -2398,8 +2379,6 @@ GnomeUIInfo edit_toolbar_info[] = {
 #endif
     GNOMEUIINFO_END
 };
-
-GtkWidget *status_bar;
 
 void update_status_bar(gfloat percentage, gfloat min_delta,
 		   gboolean init_flag)
@@ -2802,21 +2781,12 @@ void batch(int argc, char **argv)
     return ;
 }
 
-
-GtkWidget *edit_toolbar;
-GtkWidget *transport_toolbar;
-
 int main(int argc, char *argv[])
 {
-    printf("starting... ");
-
-
     
-    GtkWidget *main_vbox, *led_vbox, *track_times_vbox,	*times_vbox, *bottom_hbox;
+    GtkWidget *main_vbox, *track_times_vbox, *times_vbox, *bottom_hbox;
     GtkWidget *detect_only_box;
     GtkWidget *leave_click_marks_box;
-
-    int i;
 
     /* *************************************************************** */
     /* Lindsay Harris addition for SMP operations  */
@@ -2838,13 +2808,14 @@ int main(int argc, char *argv[])
 	    exit( 1 );
 	}
 
-	printf("Current stack limit: %d bytes\n", (int)rl.rlim_cur) ;
+	printf("Current stack limit: %d bytes\n", (int)rl.rlim_cur);
 
 	/*   Only change the size if it's too small.   */
 	if( rl.rlim_cur < GWC_STACK_LIM )
 	{
-	    rl.rlim_cur = GWC_STACK_LIM ;
 
+	    rl.rlim_cur = GWC_STACK_LIM ;
+	    printf("1 ");
 	    if( setrlimit( RLIMIT_STACK, &rl ) == -1 )
 	    {
 		perror( "setrlimit for RLIMIT_STACK:" );
@@ -2861,16 +2832,20 @@ int main(int argc, char *argv[])
     #define PREFIX "."
     #define SYSCONFDIR "."
 
-    gnome_program_init(APPNAME, VERSION, LIBGNOMEUI_MODULE, argc, argv,
+    GnomeProgram *gwc_app = gnome_program_init(APPNAME, VERSION, LIBGNOMEUI_MODULE, argc, argv,
 		       GNOME_PARAM_POPT_TABLE, NULL,
 		       GNOME_PROGRAM_STANDARD_PROPERTIES, NULL);
+    if (gwc_app == NULL) {
+      printf("ERROR: gnome_program_init failed");
+      exit (1);
+    }
 
     gnome_window_icon_set_default_from_file("gwc-logo.png");
     main_window = gnome_app_new("gwc", "Dehiss, declick audio file");
     gnome_app_create_menus(GNOME_APP(main_window), menubar);
 
     load_preferences();
-
+    
     /* load all encoding preferences on start */
     load_ogg_encoding_preferences();
     load_mp3_encoding_preferences();
@@ -2911,55 +2886,54 @@ int main(int argc, char *argv[])
     main_vbox = gtk_vbox_new(FALSE, 1);
     track_times_vbox = gtk_vbox_new(FALSE, 1);
     times_vbox = gtk_vbox_new(FALSE, 1);
-    led_vbox = gtk_vbox_new(FALSE, 1);
+    //led_vbox = gtk_vbox_new(FALSE, 1);
     bottom_hbox = gtk_hbox_new(FALSE, 1);
 
     /* This packs the button into the window (a gtk container). */
     gnome_app_set_contents(GNOME_APP(main_window), main_vbox);
 
 
-    {
-	/* setup appbar (bottom of window bar for status, menu hints and
-	 * progress display) */
-	status_bar = gnome_appbar_new(TRUE, TRUE, GNOME_PREFERENCES_USER);
-	gnome_app_set_statusbar(GNOME_APP(main_window), status_bar);
+    /* setup appbar (bottom of window bar for status, menu hints and
+     * progress display) */
+    status_bar = gnome_appbar_new(TRUE, TRUE, GNOME_PREFERENCES_USER);
+    gnome_app_set_statusbar(GNOME_APP(main_window), status_bar);
 
-	/* make menu hints display on the appbar */
-	gnome_app_install_menu_hints(GNOME_APP(main_window), menubar);
+    /* make menu hints display on the appbar */
+    gnome_app_install_menu_hints(GNOME_APP(main_window), menubar);
 
-	/* create a new canvas */
-	audio_drawing_area = gtk_drawing_area_new();
-	gtk_widget_set_size_request(GTK_WIDGET(audio_drawing_area), 600, 400);
+    /* create a new canvas */
+    audio_drawing_area = gtk_drawing_area_new();
+    gtk_widget_set_size_request(GTK_WIDGET(audio_drawing_area), 600, 400);
 
-	gtk_signal_connect(GTK_OBJECT(audio_drawing_area), "expose_event",
-			   (GtkSignalFunc) audio_expose_event, NULL);
-	gtk_signal_connect(GTK_OBJECT(audio_drawing_area),
-			   "configure_event",
-			   (GtkSignalFunc) audio_area_configure_event,
-			   NULL);
+    gtk_signal_connect(GTK_OBJECT(audio_drawing_area), "expose_event",
+		       (GtkSignalFunc) audio_expose_event, NULL);
+    gtk_signal_connect(GTK_OBJECT(audio_drawing_area),
+		       "configure_event",
+		       (GtkSignalFunc) audio_area_configure_event,
+		       NULL);
 
-	gtk_signal_connect(GTK_OBJECT(audio_drawing_area),
-			   "button_press_event",
-			   (GtkSignalFunc) audio_area_button_event, NULL);
-	gtk_signal_connect(GTK_OBJECT(audio_drawing_area),
-			   "motion_notify_event",
-			   (GtkSignalFunc) audio_area_motion_event, NULL);
-    /*          gtk_signal_connect (GTK_OBJECT(audio_drawing_area),"event",  */
-    /*                             (GtkSignalFunc) audio_area_event, NULL);  */
+    gtk_signal_connect(GTK_OBJECT(audio_drawing_area),
+		       "button_press_event",
+		       (GtkSignalFunc) audio_area_button_event, NULL);
+    gtk_signal_connect(GTK_OBJECT(audio_drawing_area),
+		       "motion_notify_event",
+		       (GtkSignalFunc) audio_area_motion_event, NULL);
+/*          gtk_signal_connect (GTK_OBJECT(audio_drawing_area),"event",  */
+/*                             (GtkSignalFunc) audio_area_event, NULL);  */
 
-	gtk_widget_set_events(audio_drawing_area, GDK_EXPOSURE_MASK
-			      | GDK_LEAVE_NOTIFY_MASK
-			      | GDK_BUTTON_PRESS_MASK
-			      | GDK_BUTTON_RELEASE_MASK
-			      | GDK_POINTER_MOTION_MASK
-			      | GDK_POINTER_MOTION_HINT_MASK);
+    gtk_widget_set_events(audio_drawing_area, GDK_EXPOSURE_MASK
+			  | GDK_LEAVE_NOTIFY_MASK
+			  | GDK_BUTTON_PRESS_MASK
+			  | GDK_BUTTON_RELEASE_MASK
+			  | GDK_POINTER_MOTION_MASK
+			  | GDK_POINTER_MOTION_HINT_MASK);
 
-	audio_view.canvas_width = 600;
-	audio_view.canvas_height = 400;
+    audio_view.canvas_width = 600;
+    audio_view.canvas_height = 400;
 
-	gtk_box_pack_start(GTK_BOX(main_vbox), audio_drawing_area, TRUE,
-			   TRUE, 0);
-    }
+    gtk_box_pack_start(GTK_BOX(main_vbox), audio_drawing_area, TRUE,
+		       TRUE, 0);
+
 
     scroll_pos = gtk_adjustment_new(1.0, 0.0, 100.0, 5.0, 5.0, 0.0);
     hscrollbar = gtk_hscrollbar_new(GTK_ADJUSTMENT(scroll_pos));
@@ -3010,46 +2984,37 @@ int main(int argc, char *argv[])
     l_selected_time = mk_label_and_pack(GTK_BOX(times_vbox), "Selected 0:00:000");
     l_samples = mk_label_and_pack(GTK_BOX(times_vbox), "Samples: 0");
 
-    for (i = 0; i < 2; i++) {
+/*
+    for (int i = 0; i < 2; i++) {
+        // note: led_bar_new does segfault
 	dial[i] = led_bar_new(20, 0);
 	gtk_box_pack_start(GTK_BOX(led_vbox), dial[i], TRUE, TRUE, 0);
 	gtk_widget_show(dial[i]);
     }
-
     led_bar_light_percent(dial[0], (0.0));
     led_bar_light_percent(dial[1], (0.0));
-
     gtk_box_pack_start(GTK_BOX(bottom_hbox), led_vbox, TRUE, TRUE, 0);
+*/
+    
     gtk_box_pack_start(GTK_BOX(bottom_hbox), track_times_vbox, TRUE, TRUE,
 		       0);
     gtk_box_pack_start(GTK_BOX(bottom_hbox), times_vbox, TRUE, TRUE, 0);
 
     gtk_box_pack_start(GTK_BOX(main_vbox), bottom_hbox, FALSE, TRUE, 0);
 
-    {
-	detect_only_box = gtk_hbox_new(FALSE, 10);
-	detect_only_widget =
-	    gtk_check_button_new_with_label
-	    ("Detect, do not repair clicks");
-	GTK_WIDGET_UNSET_FLAGS(detect_only_widget, GTK_CAN_FOCUS);
-	gtk_box_pack_start(GTK_BOX(detect_only_box), detect_only_widget,
-			   FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(led_vbox), detect_only_box, FALSE,
-			   FALSE, 0);
 
-	leave_click_marks_box = gtk_hbox_new(FALSE, 11);
-	leave_click_marks_widget =
-	    gtk_check_button_new_with_label
-	    ("Leave click marks after repairing");
-	GTK_WIDGET_UNSET_FLAGS(leave_click_marks_widget, GTK_CAN_FOCUS);
-	gtk_box_pack_start(GTK_BOX(leave_click_marks_box), leave_click_marks_widget,
-			   FALSE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(led_vbox), leave_click_marks_box, FALSE,
-			   FALSE, 0);
-    }
+    detect_only_box = gtk_hbox_new(FALSE, 10);
+    detect_only_widget = gtk_check_button_new_with_label("Detect, do not repair clicks");
+    GTK_WIDGET_UNSET_FLAGS(detect_only_widget, GTK_CAN_FOCUS);
+    gtk_box_pack_start(GTK_BOX(detect_only_box), detect_only_widget, FALSE, FALSE, 0);
+    //gtk_box_pack_start(GTK_BOX(led_vbox), detect_only_box, FALSE, FALSE, 0);
 
-
-
+    leave_click_marks_box = gtk_hbox_new(FALSE, 11);
+    leave_click_marks_widget = gtk_check_button_new_with_label("Leave click marks after repairing");
+    GTK_WIDGET_UNSET_FLAGS(leave_click_marks_widget, GTK_CAN_FOCUS);
+    gtk_box_pack_start(GTK_BOX(leave_click_marks_box), leave_click_marks_widget, FALSE, FALSE, 0);
+    //gtk_box_pack_start(GTK_BOX(led_vbox), leave_click_marks_box, FALSE, FALSE, 0);
+    
     /* and the window */
     gtk_widget_show_all(main_window);
 

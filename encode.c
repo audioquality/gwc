@@ -537,7 +537,7 @@ int encode(int mode, char *origfilename, char *newfilename, long start,
     outsfinfo = insfinfo;
 
     /* skip to position in sound file */
-    if (!sf_seek(in_fd, start, SEEK_SET) == start) {
+    if ((!sf_seek(in_fd, start, SEEK_SET)) == start) {
 	warning("Failed to seek to position in sound file\n");
 	sf_close(in_fd);
 	return (1);
@@ -582,7 +582,7 @@ int start_encode_old(int mode, char *newfilename, long start, long length, char 
 
     printf("\n") ;
 
-    sprintf(cmd, "sox %s -t raw - trim %ld\s %ld\s |", origfilename, start, length) ;
+    sprintf(cmd, "sox %s -t raw - trim %ld %ld |", origfilename, start, length) ;
 
     for(i = 0 ; options[i] != (char *)NULL ; i++) {
 	int j ;
@@ -716,25 +716,26 @@ int start_encode_old(int mode, char *newfilename, long start, long length, char 
 
 int start_encode(int mode, char *newfilename, long start, long length, char *origfilename)
 {
-    long samples_read;
-    long ctr;
-    long numframes = 0;
-    int f_des[2], child_pid;
-    int i=0 ;
-    int use_sox = 0 ;
-    char cmd[2048] ;
-    char *exec_loc ;
+	long samples_read;
+	long ctr;
+	long numframes = 0;
+	int child_pid;
+	int i=0 ;
+	int use_sox = 0 ;
+	char cmd[2048] ;
+	char *exec_loc ;
 
-    if (mode == OGG_FMT) {
-	/* execute ogg encoder using prebuilt options */
-	exec_loc = encoding_prefs.oggloc ;
-    } else if (mode == MP3_FMT) {
-	/* execute mp3 encoder using prebuilt options */
-	exec_loc = encoding_prefs.mp3loc ;
-    } else if (mode == MP3_SIMPLE_FMT) {
-	/* execute mp3 encoder using prebuilt options */
-	exec_loc = encoding_prefs.mp3loc ;
-    }
+	if (mode == OGG_FMT) {
+		/* execute ogg encoder using prebuilt options */
+		exec_loc = encoding_prefs.oggloc ;
+	} else if (mode == MP3_FMT) {
+		/* execute mp3 encoder using prebuilt options */
+		exec_loc = encoding_prefs.mp3loc ;
+	} else {
+		// (mode == MP3_SIMPLE_FMT)
+		/* execute mp3 encoder using prebuilt options */
+		exec_loc = encoding_prefs.mp3loc ;
+	}
 
     printf("Encoding using %s\n", exec_loc) ;
     printf("   ") ;
@@ -745,33 +746,33 @@ int start_encode(int mode, char *newfilename, long start, long length, char *ori
     printf("\n") ;
 
     if(use_sox) {
-	sprintf(cmd, "sox %s -t raw - trim %ld\s %ld\s |", origfilename, start, length) ;
+			sprintf(cmd, "sox %s -t raw - trim %ld %ld |", origfilename, start, length) ;
 
-	for(i = 0 ; options[i] != (char *)NULL ; i++) {
-	    int j ;
-	    strcat(cmd, " ") ;
+			for(i = 0 ; options[i] != (char *)NULL ; i++) {
+				int j ;
+				strcat(cmd, " ") ;
 
-	    for(j = 0 ; j < strlen(options[i]) ; j++) {
-		char buf[10] ;
-		int need_esc=0 ;
+				for(j = 0 ; j < strlen(options[i]) ; j++) {
+					char buf[10] ;
+					int need_esc=0 ;
 
-		if(options[i][j] == ' ') need_esc = 1 ;
-		if(options[i][j] == '\'') need_esc = 1 ;
-		if(options[i][j] == '\"') need_esc = 1 ;
+					if(options[i][j] == ' ') need_esc = 1 ;
+					if(options[i][j] == '\'') need_esc = 1 ;
+					if(options[i][j] == '\"') need_esc = 1 ;
 
-		if(need_esc)
-		    sprintf(buf, "\\%c", options[i][j]) ;
-		else
-		    sprintf(buf, "%c", options[i][j]) ;
+					if(need_esc)
+							sprintf(buf, "\\%c", options[i][j]) ;
+					else
+							sprintf(buf, "%c", options[i][j]) ;
 
-		strcat(cmd, buf) ;
-	    }
-	}
+					strcat(cmd, buf) ;
+				}
+			}
 
-	printf("CMD:\n'%s\'\n", cmd) ;
-	system(cmd) ;
-	return 0 ;
-    }
+		printf("CMD:\n'%s\'\n", cmd) ;
+		system(cmd) ;
+		return 0 ;
+  }
 
 
 
@@ -797,7 +798,7 @@ int start_encode(int mode, char *newfilename, long start, long length, char *ori
 
     } else {
 	double *framebuf = NULL ;
-	FILE *fp ;
+	//FILE *fp ;
 	/* Parent */
 	fprintf(stderr, "encoding child pid is %d\n", child_pid) ;
 

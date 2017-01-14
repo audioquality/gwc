@@ -116,7 +116,7 @@ void amplify_audio(struct sound_prefs *p, long first, long last, int channel_mas
 		double p_last = (double)(icurrent-first+1)/(double)(last-first+1) ;
 		double p_first = 1.0 - p_last ;
 		double feather_p = 1.0 ;
-		double wet_left, wet_right ;
+		double wet_left = 0, wet_right = 0;
 
 		if(icurrent - first < feather_width)
 			feather_p = (double)(icurrent-first)/(double)(feather_width) ;
@@ -173,7 +173,6 @@ int amplify_dialog(struct sound_prefs current, struct view *v)
     GtkWidget *amount_first_entry_r[2] ;
     GtkWidget *amount_last_entry_r[2] ;
     GtkWidget *feather_width_entry ;
-    int dclose = 0 ;
     int row = 0 ;
     int dres ;
     char buf[200] ;
@@ -256,7 +255,6 @@ int amplify_dialog(struct sound_prefs current, struct view *v)
 	    amount_last_r[i] = atof(gtk_entry_get_text((GtkEntry *)amount_last_entry_r[i])) ;
 	}
 	feather_width = atoi(gtk_entry_get_text((GtkEntry *)feather_width_entry)) ;
-	dclose = 1 ;
     }
 
 /*      {  */

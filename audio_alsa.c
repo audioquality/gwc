@@ -54,7 +54,8 @@ int audio_device_open(char *output_device)
         snd_perr("ALSA audio_device_open: snd_pcm_open", err);
         return -1;
     }
-
+    printf("Opened ALSA audio device: %s\n",output_device);
+    
     written_frames = 0;
     drain_delta=0 ;
     last_processed_bytes0 = -1 ;
@@ -153,7 +154,7 @@ int audio_device_set_params(AUDIO_FORMAT *format, int *channels, int *rate)
         return -1;
     }
 
-    fprintf(stderr, "audio_device_handle %d\n",(int)handle);
+    //fprintf(stderr, "audio_device_handle %i\n",(int)handle);
 
     return 0;
 }
@@ -196,25 +197,25 @@ int audio_device_write(unsigned char *data, int count)
     snd_pcm_uframes_t count_frames = snd_pcm_bytes_to_frames(handle, count);
 
     while (count_frames > 0) {
-        err = snd_pcm_writei(handle, data, count_frames);
+      err = snd_pcm_writei(handle, data, count_frames);
 
-        if (err > 0) {
-            result_frames += err;
-            count_frames -= err;
-            data += snd_pcm_frames_to_bytes(handle, err);
-        } else if (err == -EAGAIN) {
-            snd_pcm_wait(handle, 1000);
-        } else if (err < 0) {
-	    if(err == -EINVAL) {
-		fprintf(stderr, "snd_pcm_writei invalid argument: %d %d %d\n",(int)handle,(int)data,(int)count_frames);
-		exit(1) ;
-	    } else if (recover_snd_handle(err) < 0) {
-		fprintf(stderr, "audio_device_write %d %d %d\n",(int)handle,(int)data,(int)count_frames);
-                snd_perr("ALSA audio_device_write: snd_pcm_writei", err);
-		exit(1) ;
-                return -1;
-            }
+      if (err > 0) {
+          result_frames += err;
+          count_frames -= err;
+          data += snd_pcm_frames_to_bytes(handle, err);
+      } else if (err == -EAGAIN) {
+          snd_pcm_wait(handle, 1000);
+      } else if (err < 0) {
+        if (err == -EINVAL) {
+          //fprintf(stderr, "snd_pcm_writei invalid argument: %d %d %d\n",(int)handle,(int)data,(int)count_frames);
+          exit(1) ;
+        } else if (recover_snd_handle(err) < 0) {
+          //fprintf(stderr, "audio_device_write %d %d %d\n",(int)handle,(int)data,(int)count_frames);
+          snd_perr("ALSA audio_device_write: snd_pcm_writei", err);
+          exit(1) ;
+          return -1;
         }
+      }
     }
 
     written_frames += result_frames;

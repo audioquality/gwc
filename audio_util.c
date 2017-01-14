@@ -177,6 +177,7 @@ void config_audio_device(int rate_set, int bits_set, int stereo_set)
 	}
         snprintf(buf, sizeof(buf), "Set bits to %s - does your soundcard support what you requested?\n", buf_fmt_str) ;
 	warning(buf) ;
+	printf(buf);
     }
 
     if(channels != stereo + 1) {
@@ -186,6 +187,7 @@ void config_audio_device(int rate_set, int bits_set, int stereo_set)
 	else
 	    snprintf(buf, sizeof(buf), "Failed to set stereo mode\nYour sound card may not support stereo\n") ;
 	warning(buf) ;
+	printf(buf);
     }
     stereo_set = channels - 1 ;
 
@@ -194,6 +196,7 @@ void config_audio_device(int rate_set, int bits_set, int stereo_set)
 	snprintf(buf, sizeof(buf), "Rate set to %d instead of %d\nYour sound card may not support the desired rate\n",
 	             rate_set, rate) ;
 	warning(buf) ;
+	printf(buf);
     }
 
     rate = rate_set ;
@@ -203,11 +206,10 @@ void config_audio_device(int rate_set, int bits_set, int stereo_set)
 
 long playback_samples_remaining = 0 ;
 long playback_total_bytes ;
-int playback_bytes_per_block ;
-int looped_count ;
+long playback_bytes_per_block ;
+long looped_count ;
 
-#define MAXBUFSIZE 32768
-int BUFSIZE ;
+unsigned long BUFSIZE ;
 unsigned char audio_buffer[MAXBUFSIZE] ;
 unsigned char audio_buffer2[MAXBUFSIZE] ;
 
@@ -242,7 +244,7 @@ long start_playback(char *output_device, struct view *v, struct sound_prefs *p, 
 {
     long first, last ;
     long playback_samples ;
-    gfloat lv, rv ;
+    //gfloat lv, rv ;
 
     if(audio_type == SNDFILE_TYPE && sndfile == NULL) return 1 ;
 #ifdef HAVE_OGG
@@ -261,15 +263,17 @@ long start_playback(char *output_device, struct view *v, struct sound_prefs *p, 
 	snprintf(buf, sizeof(buf), "Failed to open Pulse audio output device, recommend internet search about pulse audio configuration for your OS") ;
 #endif
 	warning(buf) ;
+	printf(buf);
 	return 0 ;
     }
+    //printf("audio device %s opened\n", output_device);
 
     get_region_of_interest(&first, &last, v) ;
-
-/*      g_print("first is %ld\n", first) ;  */
-/*      g_print("last is %ld\n", last) ;  */
-/*      g_print("rate is %ld\n", (long)p->rate) ;  */
-
+/*
+      g_print("first is %ld\n", first) ;
+      g_print("last is %ld\n", last) ;
+      g_print("rate is %ld\n", (long)p->rate) ;
+*/
     first_playback_sample = first ;
 
     playback_start_position =  first ;
@@ -287,14 +291,15 @@ long start_playback(char *output_device, struct view *v, struct sound_prefs *p, 
     BUFSIZE = audio_device_best_buffer_size(playback_bytes_per_block);
 
     playback_bytes_per_block = BUFSIZE ;
+    printf("audio device buffer size total: %lu\n", playback_bytes_per_block);
 
     if(playback_bytes_per_block > MAXBUFSIZE) {
 	playback_bytes_per_block = MAXBUFSIZE ;
     }
-
+    printf("audio device buffer size set: %lu\n", playback_bytes_per_block);
     playback_samples = playback_bytes_per_block/PLAYBACK_FRAMESIZE ;
 
-    BUFSIZE = playback_bytes_per_block ;
+    //BUFSIZE = playback_bytes_per_block ;
 
     playback_samples_remaining = (last-first+1) ;
     playback_total_bytes = playback_samples_remaining*PLAYBACK_FRAMESIZE ;
@@ -305,16 +310,17 @@ long start_playback(char *output_device, struct view *v, struct sound_prefs *p, 
 /*      g_print("playback_start_position is %ld\n", playback_start_position) ;  */
 
     /* put some data in the buffer queues, to avoid underflows */
-    if(0) {
-	int n = (int)(seconds_to_preload / seconds_per_block+0.5) ;
-	int old_playback_bytes = playback_bytes_per_block ;
+/*
+    int n = (int)(seconds_to_preload / seconds_per_block+0.5) ;
+    int old_playback_bytes = playback_bytes_per_block ;
 
-	playback_bytes_per_block *= n ;
-	if(playback_bytes_per_block > MAXBUFSIZE) playback_bytes_per_block = MAXBUFSIZE ;
-	process_audio(&lv, &rv) ;
-	v->cursor_position = first+playback_bytes_per_block/(PLAYBACK_FRAMESIZE) ;
-	playback_bytes_per_block = old_playback_bytes ;
-    }
+    playback_bytes_per_block *= n ;
+    if(playback_bytes_per_block > MAXBUFSIZE) playback_bytes_per_block = MAXBUFSIZE ;
+    process_audio(&lv, &rv) ;
+    v->cursor_position = first+playback_bytes_per_block/(PLAYBACK_FRAMESIZE) ;
+    playback_bytes_per_block = old_playback_bytes ;
+    */
+    
 
 /*      g_print("playback_samples is %ld\n", playback_samples) ;  */
 /*      g_print("BUFSIZE %ld (%lg fragments)\n", (long)BUFSIZE, (double)BUFSIZE/(double)oss_info.fragsize) ;  */
@@ -514,14 +520,11 @@ void save_as_wavfile(char *filename_new, long first_sample, long last_sample)
 
 void save_selection_as_wavfile(char *filename_new, struct view *v)
 {
-    int fd_new ;
-    SNDFILE *sndfile_new ;
-    SF_INFO sfinfo_new ;
+    //int fd_new ;
+    //SNDFILE *sndfile_new ;
+    //SF_INFO sfinfo_new ;
 
-    long total_samples ;
-    long total_bytes ;
-
-    total_samples =  v->selected_last_sample-v->selected_first_sample+1 ;
+    long total_samples =  v->selected_last_sample-v->selected_first_sample+1 ;
 
     if(total_samples < 0 || total_samples > v->n_samples) {
 	warning("Invalid selection") ;
@@ -829,7 +832,7 @@ int read_raw_wavefile_data(char buf[], long first, long last)
     position_wavefile_pointer(first) ;
 
     if(audio_type == SNDFILE_TYPE) {
-	n_bytes_read = sf_read_raw(sndfile, buf, n*FRAMESIZE) ;
+	n_bytes_read = sf_read_raw(sndfile, buf, bufsize) ;
 	return n_bytes_read/FRAMESIZE ;
     }
 
@@ -896,7 +899,7 @@ int read_wavefile_data(long left[], long right[], long first, long last)
     bufsize_long = sizeof(audio_buffer) / sizeof(long) ;
 
     while(s_i < n) {
-	long n_read ;
+	long n_read = 0;
 
 #define TRY_NEW_ABSTRACTION_NOT
 #ifdef TRY_NEW_ABSTRACTION
@@ -1233,7 +1236,7 @@ int process_audio(gfloat *pL, gfloat *pR)
     unsigned char  *p_char ;
     short maxl = 0, maxr = 0 ;
     extern int audio_playback ;
-    long n_samples_to_read, n_read ;
+    long n_samples_to_read = 0, n_read = 0;
     double maxpossible ;
     double feather_out_N ;
     int feather_out = 0 ;

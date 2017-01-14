@@ -314,9 +314,7 @@ void store_cdrdao_toc(GtkFileSelection * selector, gpointer user_data)
 	gtk_file_selection_get_filename(GTK_FILE_SELECTION(file_selector))) ;
 
     if(strcmp(save_cdrdao_toc_filename, wave_filename)) {
-	int l ;
-
-	l = strlen(save_cdrdao_toc_filename) ;
+	//long l = strlen(save_cdrdao_toc_filename) ;
 
 	d_print("Save cdrdao_toc to %s\n", save_cdrdao_toc_filename) ;
 
