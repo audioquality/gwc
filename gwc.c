@@ -91,6 +91,7 @@ GtkWidget *l_first_time;
 GtkWidget *l_selected_time;
 GtkWidget *l_last_time;
 GtkWidget *l_samples;
+GtkWidget *l_samples_perpixel;
 
 /* toolbars */
 GtkWidget *status_bar;
@@ -157,7 +158,6 @@ long song_markers[MAX_MARKERS];
 gint file_is_open = FALSE;
 gint file_processing = FALSE;
 long playback_samples_per_block = 0;
-long cursor_samples_per_pixel = 0;
 int count = 0;
 
 void d_print(char *fmt, ...)
@@ -267,25 +267,24 @@ void display_times(void)
 
 #ifndef OLD
     gtk_label_set_text(GTK_LABEL(l_file_time),
-		       sample_to_time_text(prefs.n_samples, prefs.rate,
-					   "Total ", buf));
+		       sample_to_time_text(prefs.n_samples, prefs.rate, "Total ", buf));
     gtk_label_set_text(GTK_LABEL(l_first_time),
-		       sample_to_time_text(first, prefs.rate, "First ",
-					   buf));
+		       sample_to_time_text(first, prefs.rate, "First ", buf));
     gtk_label_set_text(GTK_LABEL(l_last_time),
-		       sample_to_time_text(last, prefs.rate, "Last ",
-					   buf));
+		       sample_to_time_text(last, prefs.rate, "Last ", buf));
     gtk_label_set_text(GTK_LABEL(l_selected_time),
-		       sample_to_time_text(last-first-1, prefs.rate, "Selected ",
-					   buf));
+		       sample_to_time_text(last-first-1, prefs.rate, "Selected ", buf));
     sprintf(buf, "Samples: %ld", last - first + 1);
     gtk_label_set_text(GTK_LABEL(l_samples), buf);
+    
+    sprintf(buf, "Samples per pixel: %ld", (audio_view.last_sample - audio_view.first_sample) / audio_view.canvas_width);
+    gtk_label_set_text(GTK_LABEL(l_samples_perpixel), buf);
+    
     sprintf(buf, "Track samples: %ld", audio_view.n_samples);
     gtk_label_set_text(GTK_LABEL(l_file_samples), buf);
 #else
     gtk_label_set_text(GTK_LABEL(l_file_time),
-		       sample_to_time_text(prefs.n_samples, prefs.rate, "",
-					   buf));
+		       sample_to_time_text(prefs.n_samples, prefs.rate, "", buf));
     gtk_label_set_text(GTK_LABEL(l_first_time),
 		       sample_to_time_text(first, prefs.rate, "", buf));
     gtk_label_set_text(GTK_LABEL(l_last_time),
@@ -1042,6 +1041,7 @@ gint update_cursor(gpointer data)
     // autoscroll on playback, if no audio selected,
     // and not zoomed in too much
     //
+    long cursor_samples_per_pixel = (audio_view.last_sample - audio_view.first_sample) / audio_view.canvas_width;
     if ((audio_view.selection_region == FALSE) && (cursor_samples_per_pixel > 150) &&
       (audio_view.cursor_position > (audio_view.last_sample - 
       ((audio_view.last_sample - audio_view.first_sample) / 30)))) {
@@ -1101,6 +1101,7 @@ gint play_a_block(gpointer data)
 void start_gwc_playback(GtkWidget * widget, gpointer data)
 {
     long millisec_per_block;
+    long cursor_samples_per_pixel;
     long playback_millisec, cursor_millisec;
 
     //audio_debug_print("entering start_gwc_playback with audio_playback = %d\n", audio_playback) ;
@@ -2952,12 +2953,10 @@ int main(int argc, char *argv[])
 	gtk_toolbar_set_style(GTK_TOOLBAR(edit_toolbar), GTK_TOOLBAR_ICONS) ;
     }
 
-    l_file_time =
-	mk_label_and_pack(GTK_BOX(track_times_vbox), "Track 0:00:000");
-    l_file_samples =
-	mk_label_and_pack(GTK_BOX(track_times_vbox), "Track samples: 0");
-    l_first_time =
-	mk_label_and_pack(GTK_BOX(times_vbox), "First 0:00:000");
+    l_file_time = mk_label_and_pack(GTK_BOX(track_times_vbox), "Track 0:00:000");
+    l_samples_perpixel = mk_label_and_pack(GTK_BOX(track_times_vbox), "Samples per pixel: 0");    
+    l_file_samples = mk_label_and_pack(GTK_BOX(track_times_vbox), "Track samples: 0");
+    l_first_time = mk_label_and_pack(GTK_BOX(times_vbox), "First 0:00:000");
     l_last_time = mk_label_and_pack(GTK_BOX(times_vbox), "Last 0:00:000");
     l_selected_time = mk_label_and_pack(GTK_BOX(times_vbox), "Selected 0:00:000");
     l_samples = mk_label_and_pack(GTK_BOX(times_vbox), "Samples: 0");
@@ -2974,10 +2973,8 @@ int main(int argc, char *argv[])
     gtk_box_pack_start(GTK_BOX(bottom_hbox), led_vbox, TRUE, TRUE, 0);
 */
     
-    gtk_box_pack_start(GTK_BOX(bottom_hbox), track_times_vbox, TRUE, TRUE,
-		       0);
+    gtk_box_pack_start(GTK_BOX(bottom_hbox), track_times_vbox, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(bottom_hbox), times_vbox, TRUE, TRUE, 0);
-
     gtk_box_pack_start(GTK_BOX(main_vbox), bottom_hbox, FALSE, TRUE, 0);
 
 
