@@ -742,8 +742,10 @@ void set_mp3_encoding_preferences(GtkWidget * widget, gpointer data)
 }
 
 
-/*  int preferences_dialog(void)  */
-void set_misc_preferences(GtkWidget * widget, gpointer data)
+/*
+ * Settings -> Options menu window
+ */
+void set_options(GtkWidget * widget, gpointer data)
 {
     extern double stop_key_highlight_interval;
     extern double song_key_highlight_interval;
@@ -763,7 +765,7 @@ void set_misc_preferences(GtkWidget * widget, gpointer data)
     int row = 0;
 
     dlg =
-	gtk_dialog_new_with_buttons("Miscellaneous preferences",
+	gtk_dialog_new_with_buttons("Preferences",
 			NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
 
 			 GTK_STOCK_OK, GTK_RESPONSE_OK, GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,

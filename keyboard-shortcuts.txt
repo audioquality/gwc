@@ -1,0 +1,43 @@
+Edit -> Undo: Bksp
+Edit -> Declick Strong: u
+Edit -> Declick Weak: i
+Edit -> Declick Manual: o
+Edit -> Decrackle: c
+
+Edit -> Sample: h
+Edit -> Denoise: j
+Edit -> Estimate signal: k
+
+View -> Zoom In: Num +
+View -> Zoom Out: Num -
+View -> Zoom to Selected: /
+View -> Zoom to All: \
+View -> Select All: Num *
+
+Markers -> toggle beginning marker: n
+Markers -> toggle end marker: m
+Markers -> clear markers: r
+Markers -> Expand selection to nearest markers: e
+
+Settings -> Declick: p
+Settings -> Denoise: l
+Settings -> Decrackle: ;
+
+select last S seconds of audio: s
+deselect all: Esc
+play/stop playback: space
+play selection in a loop: Shift + Space, Ctrl + Space
+
+go foward by one revolution of a 33 1/3 rpm record: Right
+go backward by one revolution of a 33 1/3 rpm record: Left
+go foward by 2 revolutions of a 33 1/3 rpm record: Ctrl + Right
+go backward by 2 revolutions of a 33 1/3 rpm record: Ctrl + Left
+go foward by 4 revolutions of a 33 1/3 rpm record: Shift + Right
+go backward by 4 revolutions of a 33 1/3 rpm record: Shift + Left
+
+zoom in Y scale: f
+zoom out Y scale: d
+reset Y scale: g
+amplify sonogram: b
+attenuate sonogram: v
+select_markers: w

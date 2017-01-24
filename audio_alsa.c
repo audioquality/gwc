@@ -54,7 +54,7 @@ int audio_device_open(char *output_device)
         snd_perr("ALSA audio_device_open: snd_pcm_open", err);
         return -1;
     }
-    printf("Opened ALSA audio device: %s\n",output_device);
+    //printf("Opened ALSA audio device: %s\n",output_device);
     
     written_frames = 0;
     drain_delta=0 ;
@@ -241,8 +241,11 @@ long _audio_device_processed_bytes = 0 ;
 long audio_device_processed_bytes(void)
 {
     if(handle != NULL)
-	_audio_device_processed_bytes = query_processed_bytes() ;
+      _audio_device_processed_bytes = query_processed_bytes() ;
 
+    if (_audio_device_processed_bytes < 0)
+      return 0;
+    
     return _audio_device_processed_bytes ;
 }
 
@@ -251,7 +254,7 @@ void audio_device_close(int drain)
     if (handle != NULL) {
         int err;
 
-	printf("Closing the ALSA audio device\n") ;
+	//printf("Closing the ALSA audio device\n") ;
 
 	_audio_device_processed_bytes = query_processed_bytes() ;
 
