@@ -36,7 +36,7 @@ typedef enum {
     GWC_UNKNOWN
 } AUDIO_FORMAT;
 
-#define MAXBUFSIZE 32768
+#define MAXBUFSIZE 65536
 
 int audio_device_open(char *output_device);
 int audio_device_set_params(AUDIO_FORMAT *format, int *channels, int *rate);

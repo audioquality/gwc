@@ -222,7 +222,7 @@ void config_audio_device(int rate_set, int bits_set, int stereo_set)
  * return playback position (current sample)
  */
 long get_playback_position() {
-  long current_position;  
+  long current_position;
   long processed_samples = audio_device_processed_bytes() / PLAYBACK_FRAMESIZE;
   long processed_frames = processed_samples / (2 - stereo);
   
@@ -239,7 +239,7 @@ long get_playback_position() {
     current_position = playback_start_position + processed_frames % playback_samples_total;
   }
   
-  d_print("get_playback_position: %ld, processed_samples: %ld\n", current_position, processed_samples);
+  //d_print("get_playback_position: %ld, processed_samples: %ld\n", current_position, processed_samples);
   
   return current_position;
 }
@@ -440,7 +440,7 @@ int process_audio()
     } else if (audio_state == AUDIO_IS_PLAYBACK) {
 	len = audio_device_write(p_char, len) ;
 	playback_samples_remaining -= n_read ;
-	d_print("playback_samples_remaining: %ld\n", playback_samples_remaining);
+	//d_print("playback_samples_remaining: %ld\n", playback_samples_remaining);
 	if (playback_samples_remaining <= 0) {
 	    extern int audio_is_looping ;
 
@@ -488,7 +488,7 @@ void stop_playback(unsigned int force)
 
 	  // check if more samples have been processed, if not,quit
 	  if (old_playback==new_playback){
-	      fprintf(stderr,"Playback appears frozen, breaking\n");
+	      d_print("Playback appears frozen, breaking\n");
 	      break;
 	  }
       }

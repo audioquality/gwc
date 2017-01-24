@@ -141,7 +141,7 @@ gint doing_statusbar_update = FALSE;
 DENOISE_DATA denoise_data = { 0, 0, 0, 0, FALSE };
 
 gint debug = 0;
-static int audio_debug = 0;
+static int audio_debug = 1;
 
 /* string to store the chosen filename */
 gchar *selected_filename;
@@ -157,6 +157,7 @@ long song_markers[MAX_MARKERS];
 gint file_is_open = FALSE;
 gint file_processing = FALSE;
 long playback_samples_per_block = 0;
+long cursor_samples_per_pixel = 0;
 int count = 0;
 
 void d_print(char *fmt, ...)
@@ -1005,6 +1006,18 @@ void stop_all_playback_functions(GtkWidget * widget, gpointer data)
 	cursor_timer = -1 ;
     }
     stop_playback(0);
+
+    // show current playback position, if outside of the view
+    if (audio_view.cursor_position > audio_view.last_sample) {
+	long view_size_half = (audio_view.last_sample - audio_view.first_sample) >> 1;
+	audio_view.first_sample = audio_view.cursor_position - view_size_half;
+	audio_view.last_sample = audio_view.cursor_position + view_size_half;
+	if (audio_view.first_sample < 0)
+	    audio_view.first_sample = 0;
+	if (audio_view.last_sample > prefs.n_samples - 1)
+	    audio_view.last_sample = prefs.n_samples - 1;
+	set_scroll_bar(prefs.n_samples - 1, audio_view.first_sample, audio_view.last_sample);
+    }
 }
 
 void gnome_flush(void)
@@ -1026,11 +1039,15 @@ gint update_cursor(gpointer data)
     // find out where the playback is right now and update audio_view.cursor_position
     set_playback_cursor_position(&audio_view);
     
-    // autoscroll on playback
+    // autoscroll on playback, if no audio selected,
+    // and not zoomed in too much
     //
-    if (audio_view.cursor_position > (audio_view.last_sample - ((audio_view.last_sample - audio_view.first_sample) / 20))) {
-      long sample_shift = (audio_view.last_sample - audio_view.first_sample) / 4;
-      audio_debug_print("autoscrolling %d samples\n", sample_shift) ;
+    if ((audio_view.selection_region == FALSE) && (cursor_samples_per_pixel > 150) &&
+      (audio_view.cursor_position > (audio_view.last_sample - 
+      ((audio_view.last_sample - audio_view.first_sample) / 30)))) {
+      
+      long sample_shift = (audio_view.last_sample - audio_view.first_sample) * 0.9;
+      //audio_debug_print("autoscrolling %d samples\n", sample_shift) ;
       if ((prefs.n_samples - 1 - audio_view.last_sample) > sample_shift) {
 	audio_view.first_sample += sample_shift;
 	audio_view.last_sample += sample_shift;
@@ -1059,7 +1076,7 @@ gint update_cursor(gpointer data)
 }
 
 /*
- * timer callback run every 50 ms
+ * timer callback
  * 
  * init from start_gwc_playback()
  * 
@@ -1084,7 +1101,6 @@ gint play_a_block(gpointer data)
 void start_gwc_playback(GtkWidget * widget, gpointer data)
 {
     long millisec_per_block;
-    long cursor_samples_per_pixel;
     long playback_millisec, cursor_millisec;
 
     //audio_debug_print("entering start_gwc_playback with audio_playback = %d\n", audio_playback) ;
@@ -1092,7 +1108,7 @@ void start_gwc_playback(GtkWidget * widget, gpointer data)
     if (file_is_open == TRUE && file_processing == FALSE && audio_playback == FALSE) {
 	audio_debug_print("\nplayback device: %s\n", audio_device) ;  
 	
-	playback_samples_per_block = start_playback(audio_device, &audio_view, &prefs, 0.10, 0.25);
+	playback_samples_per_block = start_playback(audio_device, &audio_view, &prefs, 0.1, 2);
 	audio_debug_print("playback_samples_per_block = %ld\n", playback_samples_per_block) ;
 	
 	if (playback_samples_per_block < 1)
@@ -1100,27 +1116,22 @@ void start_gwc_playback(GtkWidget * widget, gpointer data)
 
 	//prefs.rate = 44100
 	millisec_per_block = playback_samples_per_block * 1000 / prefs.rate;
-	playback_millisec = millisec_per_block;
-	/*
-	if (millisec_per_block < 100) {
-	    playback_millisec = millisec_per_block / 2;
-	} else {
-	    playback_millisec = millisec_per_block - 50;
-	}
-	*/
+	playback_millisec = millisec_per_block / 4;
+	    
 	cursor_samples_per_pixel = (audio_view.last_sample - audio_view.first_sample) / audio_view.canvas_width;
 	cursor_millisec = (cursor_samples_per_pixel * 1000) / prefs.rate;
 	/* lower limit of 1/100th second on screen redraws */
 	if (cursor_millisec < 20)
-	    cursor_millisec = 20;
+	    cursor_millisec = 19;
 	    
 	audio_playback = TRUE;
 	audio_debug_print("play_a_block timer: %ld ms\n", playback_millisec);
 	audio_debug_print("update_cursor timer: %ld ms\n", cursor_millisec);
+	audio_debug_print("cursor_samples_per_pixel: %ld\n", cursor_samples_per_pixel);
 	playback_timer = gtk_timeout_add(playback_millisec, play_a_block, NULL);
 	cursor_timer = gtk_timeout_add(cursor_millisec, update_cursor, NULL);
 
-	//play_a_block(NULL);
+	play_a_block(NULL);
 	//update_cursor(NULL);
     }
 
@@ -1554,6 +1565,8 @@ gboolean  key_press_cb(GtkWidget * widget, GdkEventKey * event, gpointer data)
 	    } else {
 	      audio_is_looping = FALSE;
 	      stop_all_playback_functions(widget, data);
+	      // repaint cursor
+	      main_redraw(TRUE, TRUE);
 	    }
 	    break;
 	case GDK_s:
