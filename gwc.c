@@ -142,7 +142,7 @@ gint doing_statusbar_update = FALSE;
 DENOISE_DATA denoise_data = { 0, 0, 0, 0, FALSE };
 
 gint debug = 0;
-static int audio_debug = 1;
+static int audio_debug = 0;
 
 /* string to store the chosen filename */
 gchar *selected_filename;

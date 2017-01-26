@@ -344,14 +344,13 @@ long start_playback(char *output_device, struct view *v, struct sound_prefs *p, 
  */
 int process_audio()
 {
-    long len = 0 ;
-    int i, frame ;
+    int i, j, frame ;
+    unsigned char *p_char;
+    long len = 0, n_samples_to_read = 0, n_read = 0;
+    double feather_out_N;
+    int feather_out = 0;
     short *p_short ;
     int *p_int ;
-    unsigned char  *p_char ;
-    long n_samples_to_read = 0, n_read = 0;
-    double feather_out_N ;
-    int feather_out = 0 ;
     
     if(audio_state == AUDIO_IS_IDLE) {
 	d_print("process_audio says NOTHING is going on.\n") ;
@@ -396,21 +395,31 @@ int process_audio()
     if(playback_samples_total - n_read < 0) {
 	feather_out = 1 ;
 	feather_out_N = MIN(n_read, FEATHER_WIDTH) ;
-	fprintf(stderr, "Feather out n_read=%ld, playback_samples_remaining=%ld, N=%lf\n", n_read, playback_samples_remaining, feather_out_N) ;
+	d_print("Feather out n_read=%ld, playback_samples_remaining=%ld, N=%lf\n", n_read, playback_samples_remaining, feather_out_N) ;
     }
 
     for(frame = 0  ; frame < n_read ; frame++) {
 	i = frame*2 ;
 
 	if(BYTESPERSAMPLE < 3) {
+	  
+	    // playback for left, right, or both channels
+	    if (audio_view.channel_selection_mask == 0x01) {
+		// play LEFT channel in both L and R outputs
+		p_short[i+1] = p_short[i];
+	    } else if (audio_view.channel_selection_mask == 0x02) {
+		// play RIGHT channel in both L and R outputs
+		p_short[i] = p_short[i+1];
+	    }
+	  
 	    if(feather_out == 1 && n_read-(frame+1) < FEATHER_WIDTH) {
-		int j = ((n_read-(frame))-1) ;
+		j = n_read - frame - 1;
 		double p = (double)(j)/feather_out_N ;
 
 		//if(i > n_read - 100) {
 		//  printf("j:%d %lf %hd %hd ", j, p, p_short[i], p_short[i+1]) ;
 		//}
-
+		
 		p_short[i] *= p ;
 		p_short[i+1] *= p ;
 
