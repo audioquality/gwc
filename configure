@@ -3169,7 +3169,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 UNAME_MACHINE=`uname -m`
-#GNOME_BASE=`gnome-config --prefix`
+GNOME_BASE=`pkg-config --variable=prefix gtk+-2.0`
 
 
 

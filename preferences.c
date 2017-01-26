@@ -196,7 +196,7 @@ void set_ogg_encoding_preferences(GtkWidget * widget, gpointer data)
 	add_number_entry_with_label_int(atoi
 					(encoding_prefs.
 					 ogg_lowpass_frequency),
-					"Adv Low Pass (Khz)", dialog_table,
+					"Adv Low Pass (kHz)", dialog_table,
 					row++);
     gtk_entry_set_max_length(GTK_ENTRY(Advlowpass_entry), 5);	/* 5 digits */
     AdvBitrateAvgWindow_entry =
@@ -605,7 +605,7 @@ void set_mp3_encoding_preferences(GtkWidget * widget, gpointer data)
 
     bitrate_entry =
 	add_number_entry_with_label_int(atoi(encoding_prefs.mp3_bitrate),
-					"MP3 Encoding Bitrate (Kbps)",
+					"MP3 Encoding Bitrate (kbps)",
 					dialog_table, row++);
     gtk_entry_set_max_length(GTK_ENTRY(bitrate_entry), 5);	/* 5 digits */
     quality_entry =
@@ -617,13 +617,13 @@ void set_mp3_encoding_preferences(GtkWidget * widget, gpointer data)
 
     lowpassfreq_entry =
 	add_number_entry_with_label(encoding_prefs.mp3_lowpass_freq,
-				    "Lowpass Filter (Khz)", dialog_table,
+				    "Lowpass Filter (kHz)", dialog_table,
 				    row++);
     gtk_entry_set_max_length(GTK_ENTRY(lowpassfreq_entry), 5);	/* 5 digits */
 
     highpassfreq_entry =
 	add_number_entry_with_label(encoding_prefs.mp3_highpass_freq,
-				    "Highpass Filter (Khz)", dialog_table,
+				    "Highpass Filter (kHz)", dialog_table,
 				    row++);
     gtk_entry_set_max_length(GTK_ENTRY(highpassfreq_entry), 5);	/* 5 digits */
 

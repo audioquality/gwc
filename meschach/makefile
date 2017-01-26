@@ -17,7 +17,7 @@ LIBS =  -lm
 RANLIB = ranlib
 
 
-CFLAGS = -O6
+CFLAGS = -g -O6
 
 
 .c.o:

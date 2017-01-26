@@ -27,7 +27,7 @@ AC_SUBST(UNAME_MACHINE)
 AC_SUBST(GNOME_BASE)
 
 UNAME_MACHINE=`uname -m`
-#GNOME_BASE=`gnome-config --prefix`
+GNOME_BASE=`pkg-config --variable=prefix gtk+-2.0`
 
 dnl Checks for libraries.
 
