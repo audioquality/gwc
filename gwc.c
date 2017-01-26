@@ -41,7 +41,7 @@
 #include <libgnomeui/libgnomeui.h>
 #include <libgnomeui/gnome-window-icon.h> /* gnome_window_icon_set_default_from_file
                                            * ...frank 31.08.03  */
-//#include "gtkledbar.h"
+#include "gtkledbar.h"
 #include "encoding.h"
 #include "soundfile.h"
 #include "audio_edit.h"
@@ -1017,6 +1017,9 @@ void stop_all_playback_functions(GtkWidget * widget, gpointer data)
 	    audio_view.last_sample = prefs.n_samples - 1;
 	set_scroll_bar(prefs.n_samples - 1, audio_view.first_sample, audio_view.last_sample);
     }
+    
+    led_bar_light_percent(dial[0], 0.0);
+    led_bar_light_percent(dial[1], 0.0);
 }
 
 void gnome_flush(void)
@@ -1084,9 +1087,12 @@ gint update_cursor(gpointer data)
  */
 gint play_a_block(gpointer data)
 {
-      
+    gfloat l, r;
+    
     if (audio_playback == TRUE) {
-      process_audio();
+      process_audio(&l, &r);
+      led_bar_light_percent(dial[0], l);
+      led_bar_light_percent(dial[1], r);
     }
     
     return (TRUE);
@@ -2763,7 +2769,7 @@ void batch(int argc, char **argv)
 int main(int argc, char *argv[])
 {
     
-    GtkWidget *main_vbox, *track_times_vbox, *times_vbox, *bottom_hbox;
+    GtkWidget *main_vbox, *led_vbox, *track_times_vbox, *times_vbox, *bottom_hbox;
     GtkWidget *detect_only_box;
     GtkWidget *leave_click_marks_box;
 
@@ -2865,7 +2871,7 @@ int main(int argc, char *argv[])
     main_vbox = gtk_vbox_new(FALSE, 1);
     track_times_vbox = gtk_vbox_new(FALSE, 1);
     times_vbox = gtk_vbox_new(FALSE, 1);
-    //led_vbox = gtk_vbox_new(FALSE, 1);
+    led_vbox = gtk_vbox_new(FALSE, 1);
     bottom_hbox = gtk_hbox_new(FALSE, 1);
 
     /* This packs the button into the window (a gtk container). */
@@ -2961,18 +2967,15 @@ int main(int argc, char *argv[])
     l_selected_time = mk_label_and_pack(GTK_BOX(times_vbox), "Selected 0:00:000");
     l_samples = mk_label_and_pack(GTK_BOX(times_vbox), "Samples: 0");
 
-/*
     for (int i = 0; i < 2; i++) {
-        // note: led_bar_new does segfault
 	dial[i] = led_bar_new(20, 0);
 	gtk_box_pack_start(GTK_BOX(led_vbox), dial[i], TRUE, TRUE, 0);
 	gtk_widget_show(dial[i]);
     }
     led_bar_light_percent(dial[0], (0.0));
     led_bar_light_percent(dial[1], (0.0));
-    gtk_box_pack_start(GTK_BOX(bottom_hbox), led_vbox, TRUE, TRUE, 0);
-*/
     
+    gtk_box_pack_start(GTK_BOX(bottom_hbox), led_vbox, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(bottom_hbox), track_times_vbox, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(bottom_hbox), times_vbox, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(main_vbox), bottom_hbox, FALSE, TRUE, 0);
@@ -2982,13 +2985,13 @@ int main(int argc, char *argv[])
     detect_only_widget = gtk_check_button_new_with_label("Detect, do not repair clicks");
     GTK_WIDGET_UNSET_FLAGS(detect_only_widget, GTK_CAN_FOCUS);
     gtk_box_pack_start(GTK_BOX(detect_only_box), detect_only_widget, FALSE, FALSE, 0);
-    //gtk_box_pack_start(GTK_BOX(led_vbox), detect_only_box, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(led_vbox), detect_only_box, FALSE, FALSE, 0);
 
     leave_click_marks_box = gtk_hbox_new(FALSE, 11);
     leave_click_marks_widget = gtk_check_button_new_with_label("Leave click marks after repairing");
     GTK_WIDGET_UNSET_FLAGS(leave_click_marks_widget, GTK_CAN_FOCUS);
     gtk_box_pack_start(GTK_BOX(leave_click_marks_box), leave_click_marks_widget, FALSE, FALSE, 0);
-    //gtk_box_pack_start(GTK_BOX(led_vbox), leave_click_marks_box, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(led_vbox), leave_click_marks_box, FALSE, FALSE, 0);
     
     /* and the window */
     gtk_widget_show_all(main_window);

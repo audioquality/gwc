@@ -90,9 +90,9 @@ gtk_led_class_init (GtkLedClass *class)
 void
 gtk_led_init (GtkLed *led)
 {
-  GtkMisc *misc;
+  //GtkMisc *misc;
   
-  misc = GTK_MISC (led);
+  GTK_MISC (led);
 
   GTK_WIDGET_SET_FLAGS (led, GTK_NO_WINDOW);
   
@@ -157,12 +157,12 @@ gtk_led_is_on (GtkLed  *led)
 static void
 gtk_led_destroy (GtkObject *object)
 {
-  GtkLed *led;
+  //GtkLed *led;
   
   g_return_if_fail (object != NULL);
   g_return_if_fail (GTK_IS_LED (object));
   
-  led = GTK_LED (object);
+  GTK_LED (object);
   
   if (GTK_WIDGET (object)->parent &&
       GTK_WIDGET_MAPPED (object))

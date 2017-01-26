@@ -76,10 +76,7 @@ GtkWidget *led_bar_new (gint segments, gint orientation)
   GdkColor  inactive;
   gint      half, full;
 
-  guint lbt = led_bar_get_type();
-  printf("led_bar_get_type: %u\n", (uint)lbt);  
-  /*NOTE: gtk_type_new does SEGFAULT! deprecated code!*/
-  led_bar = gtk_type_new(lbt);
+  led_bar = gtk_type_new (led_bar_get_type ());
   if (segments > MAX_SEGMENTS)
     segments = MAX_SEGMENTS;
   led_bar->num_segments = segments;

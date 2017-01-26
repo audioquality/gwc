@@ -342,15 +342,18 @@ long start_playback(char *output_device, struct view *v, struct sound_prefs *p, 
  *         1 - finished buffering
  *         2 - error, buffer underflow!
  */
-int process_audio()
+int process_audio(gfloat *pL, gfloat *pR)
 {
     int i, j, frame ;
     unsigned char *p_char;
     long len = 0, n_samples_to_read = 0, n_read = 0;
-    double feather_out_N;
+    double maxpossible, feather_out_N;
     int feather_out = 0;
     short *p_short ;
     int *p_int ;
+    
+    *pL = 0.0;
+    *pR = 0.0;
     
     if(audio_state == AUDIO_IS_IDLE) {
 	d_print("process_audio says NOTHING is going on.\n") ;
@@ -381,12 +384,15 @@ int process_audio()
 
     if(audio_type == SNDFILE_TYPE) {
 	if(BYTESPERSAMPLE < 3) {
+	    maxpossible = 1 << 15;
 	    n_read = sf_readf_short(sndfile, p_short, n_samples_to_read) ;
 	} else {
+	    maxpossible = 1 << 23;
 	    n_read = sf_readf_int(sndfile, p_int, n_samples_to_read) ;
 	}
     } else {
     #if defined(HAVE_MP3) || defined(HAVE_OGG)
+	maxpossible = 1 << 15;
 	n_read = read_raw_wavefile_data((char *)p_char, current_ogg_or_mp3_pos, current_ogg_or_mp3_pos+n_samples_to_read-1) ;
     #endif
     }
@@ -398,7 +404,9 @@ int process_audio()
 	d_print("Feather out n_read=%ld, playback_samples_remaining=%ld, N=%lf\n", n_read, playback_samples_remaining, feather_out_N) ;
     }
 
+    int vl, vr, maxl = 0, maxr = 0;
     for(frame = 0  ; frame < n_read ; frame++) {
+	
 	i = frame*2 ;
 
 	if(BYTESPERSAMPLE < 3) {
@@ -429,19 +437,45 @@ int process_audio()
 
 		if(frame == n_read-1) fprintf(stderr, "Feather out final %lf, n_read=%ld", p, n_read) ;
 	    }
-
+	    
+	    vl = p_short[i];
+	    vr = p_short[i+1];
+	    
 	} else {
+	    // playback for left, right, or both channels
+	    if (audio_view.channel_selection_mask == 0x01) {
+		// play LEFT channel in both L and R outputs
+		p_int[i+1] = p_int[i];
+	    } else if (audio_view.channel_selection_mask == 0x02) {
+		// play RIGHT channel in both L and R outputs
+		p_int[i] = p_int[i+1];
+	    }
+	  
 	    if(feather_out == 1 && n_read-(i+1) < 10000) {
 		double p = 1.0 - (double)(n_read-(i+1))/9999.0 ;
 		printf(".") ;
 		p_int[i] *= p ;
 		p_int[i+1] *= p ;
 	    }
+	    vl = p_int[i];
+	    vr = p_int[i+1];
 	}
 
+	if(vl > maxl) maxl = vl;
+	if(-vl > maxl) maxl = -vl;
+	
+	if(stereo) {
+	    if(vr > maxr) maxr = vr;
+	    if(-vr > maxr) maxr = -vr;
+	} else {
+	    maxr = maxl;
+	}
     }
     #undef BYTESPERSAMPLE
     if(feather_out == 1) printf("\n") ;
+    
+    *pL = (gfloat) maxl / maxpossible;
+    *pR = (gfloat) maxr / maxpossible;
 
     if (audio_state == AUDIO_IS_RECORDING) {
 	len = write(wavefile_fd, audio_buffer, len) ;
