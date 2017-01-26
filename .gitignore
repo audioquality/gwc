@@ -1,0 +1,10 @@
+*.o
+*.a
+*.rej
+*.status
+*.log
+Makefile
+gwc
+debian/
+meschach/macheps
+meschach/maxint
