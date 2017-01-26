@@ -28,40 +28,43 @@
 static void     led_bar_class_init        (LedBarClass *klass);
 static void     led_bar_init              (LedBar      *led_bar);
 
+<<<<<<< HEAD
 GtkType
 led_bar_get_type ()
 {
   static GtkType led_bar_type = 0;
+=======
+guint led_bar_get_type() {
+  static guint led_bar_type = 0;
+>>>>>>> master
 
-  if (!led_bar_type)
-    {
-      GtkTypeInfo led_bar_info = {
-	"LedBar",
-	sizeof (LedBar),
-	sizeof (LedBarClass),
-	(GtkClassInitFunc) led_bar_class_init,
-	(GtkObjectInitFunc) led_bar_init,
-	/* reserved_1 */ NULL,
-	/* reserved_1 */ NULL,
-        (GtkClassInitFunc) NULL,
-      };
+  if (!led_bar_type) {
+    GtkTypeInfo led_bar_info = {
+      "LedBar",
+      sizeof (LedBar),
+      sizeof (LedBarClass),
+      (GtkClassInitFunc) led_bar_class_init,
+      (GtkObjectInitFunc) led_bar_init,
+      /* reserved_1 */ NULL,
+      /* reserved_1 */ NULL,
+      (GtkClassInitFunc) NULL,
+    };
 
-      led_bar_type = gtk_type_unique (gtk_vbox_get_type (), &led_bar_info);
-    }
+    led_bar_type = gtk_type_unique (gtk_vbox_get_type (), &led_bar_info);
+  }
   return led_bar_type;
 }
 
-static void
-led_bar_class_init (LedBarClass *class)
+static void led_bar_class_init (LedBarClass *class)
 {
+  /*
   GtkObjectClass   *object_class;
 
   object_class = (GtkObjectClass *) class;
-
+  */
 }
 
-static void
-led_bar_init (LedBar *led_bar)
+static void led_bar_init (LedBar *led_bar)
 {
   led_bar->num_segments = 0;
   led_bar->lit_segments = 0;
@@ -69,8 +72,7 @@ led_bar_init (LedBar *led_bar)
   led_bar->seq_dir      = 1;
 }
 
-GtkWidget *
-led_bar_new (gint segments, gint orientation )
+GtkWidget *led_bar_new (gint segments, gint orientation)
 {
   LedBar    *led_bar;
   GtkWidget *table;
@@ -79,7 +81,10 @@ led_bar_new (gint segments, gint orientation )
   GdkColor  inactive;
   gint      half, full;
 
-  led_bar = gtk_type_new (led_bar_get_type ());
+  guint lbt = led_bar_get_type();
+  printf("led_bar_get_type: %u\n", (uint)lbt);  
+  /*NOTE: gtk_type_new does SEGFAULT! deprecated code!*/
+  led_bar = gtk_type_new(lbt);
   if (segments > MAX_SEGMENTS)
     segments = MAX_SEGMENTS;
   led_bar->num_segments = segments;
@@ -123,8 +128,7 @@ led_bar_new (gint segments, gint orientation )
   return GTK_WIDGET (led_bar);
 }
 
-gint
-led_bar_get_num_segments (GtkWidget *bar)
+gint led_bar_get_num_segments (GtkWidget *bar)
 {
   g_return_val_if_fail (bar != NULL, 0);
   g_return_val_if_fail (IS_LEDBAR (bar), 0);
@@ -132,8 +136,7 @@ led_bar_get_num_segments (GtkWidget *bar)
   return (LEDBAR (bar)->num_segments);
 }
 
-void
-led_bar_light_segments (GtkWidget *bar, gint num)
+void led_bar_light_segments (GtkWidget *bar, gint num)
 {
   LedBar    *led_bar;
   int       i;
@@ -163,8 +166,7 @@ led_bar_light_segments (GtkWidget *bar, gint num)
   led_bar->lit_segments = i;
 }
 
-void 
-led_bar_unlight_segments (GtkWidget *bar, gint num)
+void led_bar_unlight_segments (GtkWidget *bar, gint num)
 {
   LedBar    *led_bar;
   int       i;
@@ -186,8 +188,7 @@ led_bar_unlight_segments (GtkWidget *bar, gint num)
     led_bar->lit_segments = 0;
 }
 
-void 
-led_bar_light_segment (GtkWidget *bar, gint segment)
+void led_bar_light_segment (GtkWidget *bar, gint segment)
 {
   LedBar     *led_bar;
 
@@ -200,8 +201,7 @@ led_bar_light_segment (GtkWidget *bar, gint segment)
 		     TRUE);
 }
 
-void
-led_bar_unlight_segment (GtkWidget *bar, gint segment)
+void led_bar_unlight_segment (GtkWidget *bar, gint segment)
 {
   LedBar     *led_bar;
 
@@ -214,8 +214,7 @@ led_bar_unlight_segment (GtkWidget *bar, gint segment)
 		     FALSE);
 }
 
-void
-led_bar_light_percent (GtkWidget *bar, gfloat percent)
+void led_bar_light_percent (GtkWidget *bar, gfloat percent)
 {
   LedBar     *led_bar;
   gint       num, i;
@@ -244,8 +243,7 @@ led_bar_light_percent (GtkWidget *bar, gfloat percent)
   }
 }
 
-void
-led_bar_clear (GtkWidget *bar)
+void led_bar_clear (GtkWidget *bar)
 {
   LedBar     *led_bar;
   int        i;
@@ -263,8 +261,7 @@ led_bar_clear (GtkWidget *bar)
     }
 }
 
-void
-led_bar_sequence_step (GtkWidget *bar)
+void led_bar_sequence_step (GtkWidget *bar)
 {
   LedBar    *led_bar;
 

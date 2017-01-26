@@ -1,9 +1,0 @@
-*.o
-*.a
-*.rej
-*.status
-*.log
-gwc
-macheps
-maxint
-debian/

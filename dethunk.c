@@ -21,7 +21,7 @@
 
 #include <stdlib.h>
 #include <gnome.h>
-#include "gtkledbar.h"
+//#include "gtkledbar.h"
 #include "gwc.h"
 #include "stat.h"
 
@@ -66,7 +66,7 @@ int dethunk_new(struct sound_prefs *pPrefs,
 {
     long i ;
     long n_samples = last_sample - first_sample + 1 ;
-    int cancel, k ;
+    int k ;
     fftw_real left[FFT_MAX], right[FFT_MAX] ;
     fftw_real pre_left[FFT_MAX] ;
     fftw_real pre_right[FFT_MAX] ;
@@ -81,7 +81,6 @@ int dethunk_new(struct sound_prefs *pPrefs,
 #else /* HAVE_FFTW3 */
     rfftw_plan pFor,pBak ;
 #endif /* HAVE_FFTW3 */
-    double dfs, hdfs ;
     extern struct view audio_view ;
     int FFT_SIZE ;
     int repair_size ;
@@ -93,8 +92,8 @@ int dethunk_new(struct sound_prefs *pPrefs,
     repair_size = FFT_SIZE * n_want ;
     n_windows = 2*n_want - 1 ;
 
-    dfs = FFT_SIZE ;
-    hdfs = FFT_SIZE / 2 ;
+    //double dfs = FFT_SIZE ;
+    //double hdfs = FFT_SIZE / 2 ;
 
     {
 	long extra_samples = repair_size - n_samples ;
@@ -109,7 +108,7 @@ int dethunk_new(struct sound_prefs *pPrefs,
 
     push_status_text("Saving undo information") ;
     start_save_undo("Undo dethunk", &audio_view) ;
-    cancel = save_undo_data( first_sample, last_sample, pPrefs, TRUE) ;
+    save_undo_data( first_sample, last_sample, pPrefs, TRUE) ;
     close_undo() ;
     pop_status_text() ;
 
@@ -334,7 +333,7 @@ int dethunk_current(struct sound_prefs *pPrefs,
 {
     long i ;
     long n_samples = last_sample - first_sample + 1 ;
-    int cancel, k ;
+    int k ;
     fftw_real left[FFT_MAX], right[FFT_MAX] ;
     fftw_real pre_left_amp[FFT_MAX], pre_left_phase[FFT_MAX] ;
     fftw_real pre_right_amp[FFT_MAX], pre_right_phase[FFT_MAX] ;
@@ -347,16 +346,16 @@ int dethunk_current(struct sound_prefs *pPrefs,
 #else /* HAVE_FFTW3 */
     rfftw_plan pFor ;
 #endif /* HAVE_FFTW3 */
-    double dfs, hdfs ;
     extern struct view audio_view ;
     int FFT_SIZE ;
 
 /*      return dethunk_new(pPrefs,first_sample,last_sample,channel_mask) ;  */
 
-    for(FFT_SIZE = 8 ; FFT_SIZE < n_samples && FFT_SIZE < 8192 ; FFT_SIZE *= 2) ;
+    for (FFT_SIZE = 8 ; FFT_SIZE < n_samples && FFT_SIZE < 8192 ; FFT_SIZE *= 2) 
+      ;
 
-    dfs = FFT_SIZE ;
-    hdfs = FFT_SIZE / 2 ;
+    //double dfs = FFT_SIZE ;
+    double hdfs = FFT_SIZE / 2 ;
 
     {
 	long extra_samples = FFT_SIZE - n_samples ;
@@ -371,7 +370,7 @@ int dethunk_current(struct sound_prefs *pPrefs,
 
     push_status_text("Saving undo information") ;
     start_save_undo("Undo dethunk", &audio_view) ;
-    cancel = save_undo_data( first_sample, last_sample, pPrefs, TRUE) ;
+    save_undo_data( first_sample, last_sample, pPrefs, TRUE) ;
     close_undo() ;
     pop_status_text() ;
 
@@ -630,7 +629,6 @@ int dethunk(struct sound_prefs *pPrefs,
             long first_sample, long last_sample, int channel_mask)
 {
     long n_samples = last_sample - first_sample + 1 ;
-    int cancel ;
     fftw_real *left, *right ;
     int FFT_SIZE = MIN(ORDER*2,(last_sample-first_sample+1)*4) ;
     int siglen = last_sample-first_sample+1+2*FFT_SIZE ;
@@ -641,7 +639,7 @@ int dethunk(struct sound_prefs *pPrefs,
 
     push_status_text("Saving undo information") ;
     start_save_undo("Undo dethunk", &audio_view) ;
-    cancel = save_undo_data( first_sample, last_sample, pPrefs, TRUE) ;
+    save_undo_data( first_sample, last_sample, pPrefs, TRUE) ;
     close_undo() ;
     pop_status_text() ;
 

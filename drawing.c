@@ -114,8 +114,7 @@ draw_a_highlight_rect(GdkGC *gc,
 
 /* a utility function to draw a line */
 static void
-draw_a_line(GdkGC *gc,
-	    gint x1, gint y1, gint x2, gint y2, GdkColor *color, int end_shapes)
+draw_a_line(GdkGC *gc, gint x1, gint y1, gint x2, gint y2, GdkColor *color, int end_shapes)
 {
 	gdk_gc_set_foreground(gc, color) ;
 
@@ -456,12 +455,7 @@ void draw_sonogram(struct view *v, struct sound_prefs *pPrefs, GtkWidget *da, do
     int y ;
     int spec_start, spec_stop;
     int channel;
-    double spectrum_scale;
     int index_20Hz;
-
-#define MAXSW 2000
-#define MAXSH 400
-    unsigned char level[2][MAXSW][MAXSH] ;
 
     push_status_text("Building sonogram") ;
     update_status_bar(0.0,STATUS_UPDATE_INTERVAL,TRUE) ;
@@ -494,7 +488,7 @@ void draw_sonogram(struct view *v, struct sound_prefs *pPrefs, GtkWidget *da, do
 
        /* Normalize energy based on number of bins relative to maximum
           length FFT */
-    spectrum_scale = spectral_amp * sqrt((double) FFT_SIZE / FFT_MAX) * 4.0;
+    //double spectrum_scale = spectral_amp * sqrt((double) FFT_SIZE / FFT_MAX) * 4.0;
 #ifdef HAVE_FFTW3
     pLeft = FFTW(plan_r2r_1d)(FFT_SIZE, left, out, FFTW_R2HC, FFTW_ESTIMATE);
     pRight = FFTW(plan_r2r_1d)(FFT_SIZE, right, out, FFTW_R2HC, FFTW_ESTIMATE);
@@ -539,7 +533,6 @@ ly2_tbl[0] = 99999999;
     ly_offset[1] = AtoS(-(1-m-1),FFT_SIZE/4.0,1,v->canvas_height) - ly1_tbl[1];
 
     for(x = 0 ; x < v->canvas_width ; x++) {
-	long mid_sample ;
 
         update_status_bar((double) x / v->canvas_width,STATUS_UPDATE_INTERVAL,FALSE) ;
 
@@ -552,7 +545,6 @@ ly2_tbl[0] = 99999999;
 	if(max_sample > audio_view.n_samples-1)
 	    max_sample = audio_view.n_samples-1 ;
 
-	mid_sample = (max_sample-min_sample+1)/2 ;
 	read_fft_real_wavefile_data(left,  right, min_sample, max_sample) ;
 
 	for(k = 0 ; k < FFT_SIZE ; k++) {
@@ -653,7 +645,7 @@ ly2_tbl[0] = 99999999;
 		int y ;
 		color = psk_to_color(power_spectrum[k]*spectral_amp, 1.0, 255) ;
 		if(color < 0) color=0 ; 
-		level[channel][x][k-1] = color ;
+		//char level[channel][x][k-1] = color ;
 		if(color > 255) color=255 ;
 		{ 
 		    for(y = ly2_tbl[k] ; y < ly1_tbl[k] ; y++) {
@@ -854,7 +846,7 @@ void paint_screen_with_highlight(struct view *v, GtkWidget *da, int y1, int y2, 
 	}
     }
 #endif /* TRUNCATE_OLD */
-    if(cursor_flag == TRUE) {
+    //if(cursor_flag == TRUE) {
 /*  	draw_a_cursor_line(MyGC, x-4, y1+4, x-4, y2-4, yellow_color, 0) ;  */
 /*  	draw_a_cursor_line(MyGC, x-3, y1+3, x-3, y2-3, yellow_color, 0) ;  */
 /*  	draw_a_cursor_line(MyGC, x-2, y1+2, x-2, y2-2, yellow_color, 0) ;  */
@@ -873,10 +865,11 @@ void paint_screen_with_highlight(struct view *v, GtkWidget *da, int y1, int y2, 
 /*  	draw_a_cursor_line(MyGC, x+2, y1+2, x+2, y2-2, yellow_color, 0) ;  */
 /*  	draw_a_cursor_line(MyGC, x+3, y1+3, x+3, y2-3, yellow_color, 0) ;  */
 /*  	draw_a_cursor_line(MyGC, x+4, y1+4, x+4, y2-4, yellow_color, 0) ;  */
+/*
     } else {
        last_cursor_x = -1;   
     }
-
+*/
     gdk_draw_pixmap(da->window,
 	   da->style->fg_gc[GTK_WIDGET_STATE (da)],
 	   highlight_pixmap,
@@ -914,56 +907,56 @@ void redraw(struct view *v, struct sound_prefs *p, GtkWidget *da, int cursor_fla
 	}
     }
 
-    if(cursor_flag != TRUE) {
-	MyGC = gdk_gc_new(da->window) ;
-    } else {
-	if(v->cursor_position >= v->first_sample && v->cursor_position <= v->last_sample) {
-	    int prev_x = sample_to_pixel(v, v->prev_cursor_position) ;
-	    int x = sample_to_pixel(v, v->cursor_position) ;
-	    if(x != prev_x) {
-	       MyGC = gdk_gc_new(da->window) ;
-               if (last_cursor_x == -1) {
-		   paint_screen_with_highlight(v, da, y1, y2, cursor_flag) ;
-               } else {
-                   int x = sample_to_pixel(v, v->cursor_position) ;
+    MyGC = gdk_gc_new(da->window) ;
 
-                   /****** This is also in  paint_screen_with_highlight *******/
+    // paint cursor every time
+    if(v->cursor_position >= v->first_sample && v->cursor_position <= v->last_sample) {
+	int prev_x = sample_to_pixel(v, v->prev_cursor_position) ;
+	int x = sample_to_pixel(v, v->cursor_position) ;
+	if(x != prev_x) {
+	   if (last_cursor_x == -1) {
+	       paint_screen_with_highlight(v, da, y1, y2, cursor_flag) ;
+	   } else {
+	       int x = sample_to_pixel(v, v->cursor_position) ;
 
-                   gdk_draw_pixmap(highlight_pixmap,
-	               da->style->fg_gc[GTK_WIDGET_STATE (da)],
-	               cursor_pixmap,
-	               0,0,
-	               last_cursor_x,0,
-	               1, v->canvas_height);
-                   gdk_draw_pixmap(da->window,
-	               da->style->fg_gc[GTK_WIDGET_STATE (da)],
-	               cursor_pixmap,
-	               0,0,
-	               last_cursor_x,0,
-	               1, v->canvas_height);
-                   gdk_draw_pixmap(cursor_pixmap,
-	               da->style->fg_gc[GTK_WIDGET_STATE (da)],
-	               highlight_pixmap,
-	               x,0,
-	               0,0,
-	               1, v->canvas_height);
+	       /****** This is also in  paint_screen_with_highlight *******/
 
-	           draw_a_cursor_line(MyGC, x+0, 0, x+0, v->canvas_height-1, yellow_color, 0) ;
-                   gdk_draw_pixmap(da->window,
-	               da->style->fg_gc[GTK_WIDGET_STATE (da)],
-	               highlight_pixmap,
-	               x,0,
-	               x,0,
-	               1, v->canvas_height);
-                   last_cursor_x = x;
-               }
-	       gdk_gc_unref(MyGC) ;
-	    } else {
-	    }
-	    v->prev_cursor_position = v->cursor_position ;
+	       gdk_draw_pixmap(highlight_pixmap,
+		   da->style->fg_gc[GTK_WIDGET_STATE (da)],
+		   cursor_pixmap,
+		   0,0,
+		   last_cursor_x,0,
+		   1, v->canvas_height);
+	       gdk_draw_pixmap(da->window,
+		   da->style->fg_gc[GTK_WIDGET_STATE (da)],
+		   cursor_pixmap,
+		   0,0,
+		   last_cursor_x,0,
+		   1, v->canvas_height);
+	       gdk_draw_pixmap(cursor_pixmap,
+		   da->style->fg_gc[GTK_WIDGET_STATE (da)],
+		   highlight_pixmap,
+		   x,0,
+		   0,0,
+		   1, v->canvas_height);
+
+	       draw_a_cursor_line(MyGC, x+0, 0, x+0, v->canvas_height-1, yellow_color, 0) ;
+	       
+	       gdk_draw_pixmap(da->window,
+		   da->style->fg_gc[GTK_WIDGET_STATE (da)],
+		   highlight_pixmap,
+		   x,0,
+		   x,0,
+		   1, v->canvas_height);
+	       last_cursor_x = x;
+	   }
+	} else {
 	}
-	return ;
+	v->prev_cursor_position = v->cursor_position ;
     }
+    if (cursor_flag)
+      return;
+
 
     if(first_time == 1) {
 	int i ;
@@ -1109,9 +1102,8 @@ void redraw(struct view *v, struct sound_prefs *p, GtkWidget *da, int cursor_fla
 
     if(sonogram_flag == TRUE) {
 	if (redraw_data)
-	    draw_sonogram(v, p, da, samples_per_pixel, cursor_flag)   ;
-        gdk_draw_rectangle(audio_pixmap, MyGC, TRUE,
-    		0, y1, v->canvas_width-1, 8) ;
+	    draw_sonogram(v, p, da, samples_per_pixel, cursor_flag);
+        gdk_draw_rectangle(audio_pixmap, MyGC, TRUE, 0, y1, v->canvas_width-1, 8) ;
 	paint_screen_with_highlight(v, da, y1, y2, cursor_flag) ;
     } else if (redraw_data) {
 	/* clear the background to grey */
@@ -1169,7 +1161,7 @@ void redraw(struct view *v, struct sound_prefs *p, GtkWidget *da, int cursor_fla
 	    double last_right_rmse = -1.0 ;
 	    double left_rmse = -1 ;
 	    double right_rmse = -1 ;
-	    double samp_width = 1./samples_per_pixel ;
+	    //double samp_width = 1./samples_per_pixel ;
 
 	    for(x = 0 ; x < v->canvas_width ; x++) {
 		int s_at_x = (double)x / (double)(v->canvas_width-1) * n_view_samples + v->first_sample ;

@@ -48,8 +48,8 @@
 #endif
 
 #define GWC_VERSION_MAJOR 0
-#define GWC_VERSION_MINOR 21
-#define VERSION "0.21-19"
+#define GWC_VERSION_MINOR 30
+#define VERSION "0.30.0"
 #define GWC_POINT_HANDLE 0x01
 #define SBW  128	/* Sample Block Width, the number of audio sammples summarized in one block  */
 #define STATUS_UPDATE_INTERVAL 0.5	/* update status bar every 1/2  second on long edit operations */
@@ -258,7 +258,7 @@ int  pinknoise_dialog(struct sound_prefs current, struct view *) ;
 int  play_wavefile_data(long first, long last) ;
 void pop_status_text(void) ;
 int print_noise_sample(struct sound_prefs *pPrefs, struct denoise_prefs *pDnprefs, long noise_start, long noise_end) ;
-int  process_audio(gfloat *pL, gfloat *pR) ;
+int  process_audio() ;
 void push_status_text(gchar *msg) ;
 int read_fft_real_wavefile_data(fftw_real left[], fftw_real right[], long first, long last) ;
 int read_float_wavefile_data(float left[], float right[], long first, long last) ;
@@ -292,11 +292,12 @@ int save_undo_data_remove(long first_sample, long last_sample, int status_update
 int save_undo_data_insert(long first_sample, long last_sample, int status_update_flag);
 #endif
 void seek_to_audio_position(long playback_position) ;
-void set_misc_preferences(GtkWidget * widget, gpointer data) ;
+void set_options(GtkWidget * widget, gpointer data) ;
 void set_mp3_simple_encoding_preferences(GtkWidget * widget, gpointer data);
 void set_mp3_encoding_preferences(GtkWidget * widget, gpointer data);
 void set_ogg_encoding_preferences(GtkWidget * widget, gpointer data);
-long set_playback_cursor_position(struct view *v, long msec_per_visual_frame) ;
+void set_playback_cursor_position(struct view *v) ;
+long get_playback_position() ;
 void set_status_text(gchar *msg) ;
 void simple_amplify_audio(struct sound_prefs *p, long first, long last, int channel_mask, double amount) ;
 void sndfile_truncate(long total_samples) ;
@@ -306,7 +307,7 @@ void resample_audio_data(struct sound_prefs *p, long first, long last) ;
 int  start_recording(char *input_device, char *filename) ;
 long start_playback(char *output_device, struct view *v, struct sound_prefs *p, double seconds_per_block, double seconds_to_preload) ;
 int  start_monitor(char *input_device) ;
-void stop_playback(int force) ;
+void stop_playback(unsigned int force) ;
 void stop_recording(void) ;
 int start_save_undo(char *undo_msg, struct view *v) ;
 /* void sum_sample_block(struct sample_block *sb, double left[], double right[], long n) ; */

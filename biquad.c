@@ -111,10 +111,9 @@ void filter_audio(struct sound_prefs *p, long first, long last, int channel_mask
     long left[BUFSIZE], right[BUFSIZE] ;
     long x_left[3], x_right[3] ;
     long y_left[3], y_right[3] ;
-    long current, i, f ;
+    long current, i ;
     int loops = 0 ;
-    long ring_buffer_length ;
-    double rb_left[BUFSIZE], rb_right[BUFSIZE] ;
+    //double rb_left[BUFSIZE], rb_right[BUFSIZE] ;
 
     load_filter_preferences() ;
 
@@ -156,12 +155,14 @@ extern biquad *BiQuad_new(int type, smp_type dbGain, /* gain of filter */
 
     iir_left  = BiQuad_new(filter_type, dbGain, Fc, p->rate, bandwidth) ;
     iir_right = BiQuad_new(filter_type, dbGain, Fc, p->rate, bandwidth) ;
-
-    ring_buffer_length = p->rate / Fc + 0.5 ;
+    
+    /*
+    long ring_buffer_length = p->rate / Fc + 0.5 ;
     for(i = 0 ; i < ring_buffer_length ; i++) {
 	rb_left[i] = 0.0 ;
 	rb_right[i] = 0.0 ;
     }
+    */
 #else
     FILTER iir_left, iir_right ;
 
@@ -333,7 +334,6 @@ int filter_dialog(struct sound_prefs current, struct view *v)
 {
     GtkWidget *dlg, *dialog_table ;
     GtkWidget *feather_entry ;
-    int dclose = 0 ;
     int row = 0 ;
     int dres ;
 
@@ -413,7 +413,6 @@ int filter_dialog(struct sound_prefs current, struct view *v)
 	filter_prefs.Fc = Fc ;
 	filter_prefs.bandwidth = bandwidth ;
 	filter_prefs.filter_type = filter_type ;
-	dclose = 1 ;
     }
 
     gtk_widget_destroy(dlg) ;
