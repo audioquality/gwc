@@ -28,15 +28,10 @@
 static void     led_bar_class_init        (LedBarClass *klass);
 static void     led_bar_init              (LedBar      *led_bar);
 
-<<<<<<< HEAD
 GtkType
 led_bar_get_type ()
 {
   static GtkType led_bar_type = 0;
-=======
-guint led_bar_get_type() {
-  static guint led_bar_type = 0;
->>>>>>> master
 
   if (!led_bar_type) {
     GtkTypeInfo led_bar_info = {
