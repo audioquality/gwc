@@ -31,8 +31,12 @@ Original Authors Homepage: [http://gwc.sourceforge.net]()
   * if only one channel is selected, its played to both L and R outputs - helps to identify single channel clicks
   * many new keyboard shortcuts
   * remember window size between restarts
-  * removed the ledbar. the way it was implemented, it was more confusing than useful
   * attempt at cleaning the code, removed compilation warnings
+  * removed the ledbar. the way it was implemented, it was more confusing than useful
+  * removed lossy compression support - working with lossy audio is a bad practice. If you need to export/convert/work with different formats, use dedicated tools:
+    - Audio Editor: [Audacity](http://www.audacityteam.org)
+    - Metadata Editor: [EasyTAG](https://wiki.gnome.org/Apps/EasyTAG) or [Kid3](https://kid3.sourceforge.io)
+    - Format Converter: [Sound Converter](http://soundconverter.org)
 
 
 ##Installation
