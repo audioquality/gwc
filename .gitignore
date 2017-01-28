@@ -8,3 +8,4 @@ gwc
 debian/
 meschach/macheps
 meschach/maxint
+autom4te*

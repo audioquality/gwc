@@ -24,8 +24,6 @@
 #include "gwc.h"
 #include "soundfile.h"
 
-#ifndef TRUNCATE_OLD
-
 extern struct sound_prefs prefs;
 
 #define CLIPBOARD_FILE "gwc_intclip.dat"
@@ -246,5 +244,3 @@ void truncate_wavfile(struct view *v, int save_undo)
 
     resample(0, prefs.n_samples-1);
 }
-
-#endif /* !TRUNCATE_OLD */

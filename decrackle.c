@@ -21,7 +21,6 @@
 
 #include <stdlib.h>
 #include <gnome.h>
-#include "gtkledbar.h"
 #include "gwc.h"
 
 int do_decrackle(struct sound_prefs *pPrefs, long first_sample, 

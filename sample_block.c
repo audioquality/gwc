@@ -205,9 +205,8 @@ void resample_audio_data(struct sound_prefs *p, long first, long last)
     long first_block = first/SBW ;
     long last_block = last/SBW ;
     long current_block ;
-#ifndef TRUNCATE_OLD
     resize_sample_buffer(p);
-#endif
+
     for(current_block = first_block ; current_block <= last_block ; current_block++) {
 	struct sample_block *sb = &sample_buffer[current_block] ;
 	stat_sample_block(sb, p, current_block) ;
@@ -218,9 +217,8 @@ void resample_audio_data(struct sound_prefs *p, long first, long last)
 void rescan_sample_buffer(struct sound_prefs *p)
 {
     long current_block ;
-#ifndef TRUNCATE_OLD
     resize_sample_buffer(p);
-#endif
+
     n_blocks = p->n_samples / SBW ;
     n_blocks += (p->n_samples - n_blocks*SBW > 0 ? 1 : 0) ;
 
@@ -237,7 +235,6 @@ void rescan_sample_buffer(struct sound_prefs *p)
     pop_status_text() ;
 }
 
-#ifndef TRUNCATE_OLD
 void resize_sample_buffer(struct sound_prefs *p)
 {
     n_blocks = p->n_samples / SBW ;
@@ -259,7 +256,6 @@ void resize_sample_buffer(struct sound_prefs *p)
         }
     }
 }
-#endif
 
 void fill_sample_buffer(struct sound_prefs *p)
 {

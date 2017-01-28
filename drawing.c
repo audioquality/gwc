@@ -827,25 +827,6 @@ void paint_screen_with_highlight(struct view *v, GtkWidget *da, int y1, int y2, 
 	else
 	    draw_a_highlight_rect(MyGC, minx, 0, maxx, v->canvas_height-1, highlight_color) ;
     }
-#ifdef TRUNCATE_OLD
-    if(v->truncate_head > 0) {
-	gint maxx = sample_to_pixel(v, v->truncate_head) ;
-	if(maxx > 0) {
-	    gint minx = sample_to_pixel(v, 0) ;
-	    if(minx < 0) minx = 0 ;
-	    draw_a_highlight_rect(MyGC, minx, 0, maxx, v->canvas_height-1, cut_highlight_color) ;
-	}
-    }
-
-    if(v->truncate_tail < v->n_samples-1) {
-	gint minx = sample_to_pixel(v, v->truncate_tail) ;
-	if(minx < v->canvas_width) {
-	    gint maxx = sample_to_pixel(v, v->n_samples-1) ;
-	    if(maxx > v->canvas_width-1) maxx = v->canvas_width-1 ;
-	    draw_a_highlight_rect(MyGC, minx, 0, maxx, v->canvas_height-1, cut_highlight_color) ;
-	}
-    }
-#endif /* TRUNCATE_OLD */
     //if(cursor_flag == TRUE) {
 /*  	draw_a_cursor_line(MyGC, x-4, y1+4, x-4, y2-4, yellow_color, 0) ;  */
 /*  	draw_a_cursor_line(MyGC, x-3, y1+3, x-3, y2-3, yellow_color, 0) ;  */

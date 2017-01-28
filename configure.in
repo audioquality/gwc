@@ -43,39 +43,11 @@ AC_SUBST(PAHDR)
 AC_SUBST(ALSALIB)
 AC_SUBST(ALSADEF)
 AC_SUBST(ALSACFLAGS)
-AC_SUBST(OGGLIB)
-AC_SUBST(OGGHDR)
-AC_SUBST(MP3LIB)
-AC_SUBST(MP3HDR)
 
-dnl enable ogg/vorbis libs on user request and check installation
-OGGLIB=""
-OGGHDR=""
-
-AC_ARG_ENABLE(ogg, [  --enable-ogg           compile Ogg file reading support (default disabled)])
-
-AC_MSG_CHECKING([for ogg])
-if test "$enableval" = "yes"
-then
-    ogg="yes";OGGLIB="-lvorbis -logg -lvorbisfile";OGGHDR="-DHAVE_OGG"
-else
-    ogg="disabled"
-fi
+ogg="disabled"
 AC_MSG_RESULT($ogg)
 
-dnl enable mp3 libs on user request and check installation
-MP3LIB=""
-MP3HDR=""
-
-AC_ARG_ENABLE(mp3, [  --enable-mp3           compile mp3 file reading support (default disabled)])
-
-AC_MSG_CHECKING([for mp3])
-if test "$enableval" = "yes"
-then
-    mp3="yes";MP3LIB="-lmpg123";MP3HDR="-DHAVE_MP3"
-else
-    mp3="disabled"
-fi
+mp3="disabled"
 AC_MSG_RESULT($mp3)
 
 dnl enable alsa on user request and check installation

@@ -41,7 +41,6 @@
 #include <libgnomeui/libgnomeui.h>
 #include <libgnomeui/gnome-window-icon.h> /* gnome_window_icon_set_default_from_file
                                            * ...frank 31.08.03  */
-#include "encoding.h"
 #include "soundfile.h"
 #include "audio_edit.h"
 #include <sndfile.h>
@@ -65,9 +64,7 @@
 #include "icons/view_all.xpm"
 #include "icons/select_all.xpm"
 #include "icons/spectral.xpm"
-#ifndef TRUNCATE_OLD
 #include "icons/silence.xpm"
-#endif
 
 GtkWidget *main_window;
 
@@ -101,7 +98,6 @@ GtkWidget *file_selector;
 
 struct sound_prefs prefs;
 struct denoise_prefs denoise_prefs;
-struct encoding_prefs encoding_prefs;
 struct view audio_view;
 struct click_data click_data;
 int audio_playback = FALSE;
@@ -126,7 +122,6 @@ gint declick_iterate_flag = 0;
 double decrackle_level = 0.2;
 gint decrackle_window = 2000;
 gint decrackle_average = 3;
-gint encoding_type = GWC_OGG;
 
 extern double spectral_amp;
 
@@ -170,22 +165,9 @@ void d_print(char *fmt, ...)
 
 void usage(char *prog)
 {
-	fprintf(stderr, "Usages:\n\
-%s\n\
-%s [file]\n\
-%s <file> <batch[s] declick sensitivity start_position stop_position>\n\
-%s <file> <batch[s] declick-hpf sensitivity start_position stop_position>\n\
-%s <file> <batch[s] amplify amount start_position stop_position>\n\
-%s <file> <batch[s] denoise sample_start sample_end denoise_start denoise_end>\n\
-%s <file> <batch[s] dsp start_position stop_position>\n\
-%s <file> <batch[s] dsp start_position stop_position>\n\
-%s <file> <batch[s] truncate keep_start keep_end>\n\
-Position are in hh:mm:ss for batch or in samples for batchs. Stop_position can \
-also be end to denote the stop_position being the end of file.\n",
-prog, prog, prog, prog, prog, prog, prog, prog, prog);
+	fprintf(stderr, "Usages:\n\%s\n\%s [file]\n",prog, prog);
 	exit(EXIT_FAILURE);
 }
-
 
 void audio_debug_print(char *fmt, ...)
 {
@@ -228,7 +210,6 @@ void shellsort_long(long a[], int n)
 
 }
 
-#ifndef TRUNCATE_OLD
 static int is_region_selected(void)
 {
     if (!audio_view.selection_region) {
@@ -237,26 +218,6 @@ static int is_region_selected(void)
     }
     return 1;
 }
-#endif
-
-void append_cdrdao(struct view *v)
-{
-    FILE *fp = fopen("cdrdao.toc", "a");
-    long first, last ;
-
-    if (fp == NULL) {
-	fp = fopen("cdrdao.toc", "w");
-    }
-
-    get_region_of_interest(&first, &last, v) ;
-
-    fprintf(fp, "TRACK AUDIO\n");
-    fprintf(fp, "FILE \"%s\" %ld %ld\n", wave_filename, first, last - first + 1);
-
-    fclose(fp);
-}
-
-
 
 void display_times(void)
 {
@@ -264,7 +225,6 @@ void display_times(void)
     long first, last;
     get_region_of_interest(&first, &last, &audio_view);
 
-#ifndef OLD
     gtk_label_set_text(GTK_LABEL(l_file_time),
 		       sample_to_time_text(prefs.n_samples, prefs.rate, "Total ", buf));
     gtk_label_set_text(GTK_LABEL(l_first_time),
@@ -281,16 +241,6 @@ void display_times(void)
     
     sprintf(buf, "Track samples: %ld", audio_view.n_samples);
     gtk_label_set_text(GTK_LABEL(l_file_samples), buf);
-#else
-    gtk_label_set_text(GTK_LABEL(l_file_time),
-		       sample_to_time_text(prefs.n_samples, prefs.rate, "", buf));
-    gtk_label_set_text(GTK_LABEL(l_first_time),
-		       sample_to_time_text(first, prefs.rate, "", buf));
-    gtk_label_set_text(GTK_LABEL(l_last_time),
-		       sample_to_time_text(last, prefs.rate, "", buf));
-    sprintf(buf, " %ld", last - first + 1);
-    gtk_label_set_text(GTK_LABEL(l_samples), buf);
-#endif
 }
 
 void set_scroll_bar(long n, long first, long last)
@@ -308,14 +258,6 @@ void set_scroll_bar(long n, long first, long last)
     a->step_increment = ps / 8.0;
     a->page_increment = ps * 0.95;
 
-/*      scroll_pos = gtk_adjustment_new(1.0, 0.0, 100.0, 10.0, 20.0, 20.0) ;  */
-/*      a->lower = 0 ;  */
-/*      a->upper = 100.0 ;  */
-/*      a->value = 10.0 ;  */
-/*      a->step_increment = 10.0 ;  */
-/*      a->page_increment = 20.0 ;  */
-/*      a->page_size = 20.0 ;  */
-
     gtk_adjustment_changed(a);
 }
 
@@ -324,8 +266,7 @@ void scroll_bar_changed(GtkWidget * widget, gpointer data)
     GtkAdjustment *a = (GtkAdjustment *) scroll_pos;
 
     audio_view.first_sample = MAX(0, MIN(prefs.n_samples - 1, a->value));
-    audio_view.last_sample =
-	MAX(0, MIN(prefs.n_samples - 1, a->value + a->page_size));
+    audio_view.last_sample = MAX(0, MIN(prefs.n_samples - 1, a->value + a->page_size));
 
     main_redraw(FALSE, TRUE);
     /* pause 1/3 second to allow the user to release the mouse button */
@@ -371,9 +312,6 @@ void load_preferences(void)
     song_key_highlight_interval = gnome_config_get_float("song_key_highlight_interval=15");
     song_mark_silence = gnome_config_get_float("song_mark_silence=2.0");
     sonogram_log = gnome_config_get_float("sonogram_log=0");
-
-/*      audio_view.truncate_tail = gnome_config_get_int("truncate_tail=-1") ;  */
-/*      audio_view.truncate_head = gnome_config_get_int("truncate_head=-1") ;  */
     strcpy(audio_device, gnome_config_get_string("audio_device=hw:0,0"));
     gnome_config_pop_prefix();
 }
@@ -403,9 +341,6 @@ void save_preferences(void)
     gnome_config_set_float("song_mark_silence", song_mark_silence);
     gnome_config_set_int("sonogram_log", sonogram_log);
     gnome_config_set_string("audio_device", audio_device);
-
-/*      gnome_config_set_int("truncate_head", audio_view.truncate_head) ;  */
-/*      gnome_config_set_int("truncate_tail", audio_view.truncate_tail) ;  */
     gnome_config_sync();
     gnome_config_pop_prefix();
 }
@@ -874,21 +809,6 @@ void scale_up_callback(GtkWidget * widget, gpointer data)
 void cut_callback(GtkWidget * widget, gpointer data)
 {
     if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-#ifdef TRUNCATE_OLD
-	long start, end;
-
-	file_processing = TRUE;
-	get_region_of_interest(&start, &end, &audio_view);
-
-	if (start < prefs.n_samples - end) {
-	    audio_view.truncate_head = end + 1;
-	} else {
-	    audio_view.truncate_tail = start - 1;
-	}
-
-	main_redraw(FALSE, TRUE);
-	file_processing = FALSE;
-#else /* !TRUNCATE_OLD */
         if (is_region_selected()) {
             long first, last;
             get_region_of_interest(&first, &last, &audio_view);
@@ -902,10 +822,9 @@ void cut_callback(GtkWidget * widget, gpointer data)
                 file_processing = FALSE;
             }
         }
-#endif /* !TRUNCATE_OLD */
     }
 }
-#ifndef TRUNCATE_OLD
+
 void copy_callback(GtkWidget * widget, gpointer data)
 {
     if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
@@ -966,7 +885,6 @@ void silence_callback(GtkWidget * widget, gpointer data)
         }
     }
 }
-#endif /* !TRUNCATE_OLD */
 
 void scale_reset_callback(GtkWidget * widget, gpointer data)
 {
@@ -1547,8 +1465,6 @@ gboolean  key_press_cb(GtkWidget * widget, GdkEventKey * event, gpointer data)
     gboolean handled = TRUE ;
     long sample_shift;
 
-/*      g_print("key_press_cb\n") ;  */
-
     /* GDK_b, GDK_c, GDK_e, GDK_n, GDK_z used through menus */
     switch (event->keyval) {
 	case GDK_space:
@@ -1718,8 +1634,6 @@ gint delete_event(GtkWidget * widget, GdkEvent * event, gpointer data)
     return FALSE;
 }
 
-
-/* Another callback */
 void destroy(GtkWidget * widget, gpointer data)
 {
     if(cleanup_and_close(&audio_view, &prefs))
@@ -1793,10 +1707,6 @@ void open_wave_filename(void)
 	    prefs = tmp_prefs;
 	    spectral_view_flag = FALSE;
 	    if (prefs.wavefile_fd != -1) {
-#ifdef TRUNCATE_OLD
-		audio_view.truncate_head = 0;
-		audio_view.truncate_tail = (prefs.n_samples - 1);
-#endif /* TRUNCATE_OLD */
 		audio_view.n_samples = prefs.n_samples;
 		if (audio_view.first_sample == -1) {
 		    audio_view.first_sample = 0;
@@ -1903,110 +1813,6 @@ void open_file_selection(GtkWidget * widget, gpointer data)
     }
 }
 
-void save_selection_as_encoded(int fmt, char *filename, char *filename_new, struct view *v, char *trackname)
-{
-    long total_samples;
-    total_samples = v->selected_last_sample - v->selected_first_sample + 1;
-
-    if (total_samples < 0 || total_samples > v->n_samples) {
-	warning("Invalid selection");
-	return;
-    }
-
-    /* save part of file as encoded fmt - fmt,old file, new file, start sample, number of samples */
-
-    encode(fmt, filename, filename_new, v->selected_first_sample,
-	   total_samples, trackname);
-}
-
-void store_selected_filename_as_encoded(GtkFileSelection * selector,
-				    gpointer user_data)
-{
-    int enc_format = 0 ;
-    char trackname[1024] = "" ;
-
-    if (encoding_type == GWC_OGG) enc_format = OGG_FMT ;
-    if (encoding_type == GWC_MP3) enc_format = MP3_FMT ;
-    if (encoding_type == GWC_MP3_SIMPLE) enc_format = MP3_SIMPLE_FMT ;
-
-    strncpy(save_selection_filename,
-	   gtk_file_selection_get_filename(GTK_FILE_SELECTION
-					   (file_selector)), PATH_MAX);
-
-    gtk_widget_destroy(file_selector);
-
-    if(!prompt_user("Enter the trackname:", trackname, 1023)) {
-	file_processing = TRUE;
-	save_selection_as_encoded(enc_format, wave_filename,
-				  save_selection_filename,
-				  &audio_view, trackname);
-	file_processing = FALSE;
-    }
-}
-
-void save_as_encoded()
-{
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-
-	char tmppath[PATH_MAX+6];
-
-	if (audio_view.selection_region == TRUE) {
-	    strcpy(tmppath, pathname);
-
-	    /* Create the selector */
-	    file_selector = gtk_file_selection_new("Encode to filename:");
-
-	    if (encoding_type == GWC_OGG) {
-		/* make it a .ogg extension */
-		bcopy(".ogg", strrchr(tmppath, '.'), 4);
-	    } else {
-		/* make it a .mp3 extension */
-		bcopy(".mp3", strrchr(tmppath, '.'), 4);
-	    }
-
-	    gtk_file_selection_set_filename(GTK_FILE_SELECTION
-					    (file_selector), tmppath);
-
-	    gtk_signal_connect(GTK_OBJECT
-			       (GTK_FILE_SELECTION(file_selector)->
-				ok_button), "clicked",
-			       GTK_SIGNAL_FUNC
-			       (store_selected_filename_as_encoded), NULL);
-
-
-	    gtk_signal_connect_object(GTK_OBJECT
-				      (GTK_FILE_SELECTION(file_selector)->
-				       cancel_button), "clicked",
-				      GTK_SIGNAL_FUNC(gtk_widget_destroy),
-				      (gpointer) file_selector);
-
-	    /* Display the dialog */
-	    gtk_widget_show(file_selector);
-	} else {
-	    info("Please highlight a region to save first");
-	}
-
-    }
-}
-
-void save_as_ogg_selection(GtkWidget * widget, gpointer data)
-{
-    encoding_type = GWC_OGG;
-    save_as_encoded();
-}
-
-void save_as_mp3_selection(GtkWidget * widget, gpointer data)
-{
-    encoding_type = GWC_MP3;
-    save_as_encoded();
-}
-
-void save_as_mp3_simple_selection(GtkWidget * widget, gpointer data)
-{
-    encoding_type = GWC_MP3_SIMPLE;
-    save_as_encoded();
-}
-
 void save_as_selection(GtkWidget * widget, gpointer data)
 {
 
@@ -2062,22 +1868,6 @@ GnomeUIInfo file_menu[] = {
     GNOMEUIINFO_ITEM_NONE("Save Selection As...",
 		      "Saves the current selection to a new wavfile",
 		      save_as_selection),
-    GNOMEUIINFO_ITEM_NONE("Simple Encode Selection as MP3",
-		      "Saves the current selection to a new MP3 encoded format, simple options",
-		      save_as_mp3_simple_selection),
-    GNOMEUIINFO_ITEM_NONE("Encode Selection as MP3",
-		      "Saves the current selection to a new MP3 encoded format",
-		      save_as_mp3_selection),
-    GNOMEUIINFO_ITEM_NONE("Encode Selection as OGG/Vorbis",
-		      "Encodes entire waveform as OGG Vorbis",
-		      save_as_ogg_selection),
-    GNOMEUIINFO_SEPARATOR,
-    GNOMEUIINFO_ITEM_NONE("Create cdrdao toc file As...",
-		      "Create a cdrtao table of contents file for marked songs",
-		      save_cdrdao_tocs),
-    GNOMEUIINFO_ITEM_NONE("Create cdrdao toc file, using marker pairs,  As...",
-		      "Create a cdrtao table of contents file for marked songs, using pairs of song markers",
-		      save_cdrdao_tocp),
     GNOMEUIINFO_ITEM_NONE("Split audio on song markers",
 		      "Create individual track files",
 		      split_audio_on_markers),
@@ -2133,10 +1923,6 @@ GnomeUIInfo edit_menu[] = {
     GNOMEUIINFO_ITEM_ACCEL(" Denoise",
 		 "Remove noise from  current view or selection",
 		 remove_noise, remove_noise_xpm, GDK_j),
-#ifdef TRUNCATE_OLD
-    GNOMEUIINFO_ITEM(" Cut", "Truncate head or tail from audio data",
-		 cut_callback, cut_xpm),
-#else
     GNOMEUIINFO_ITEM(" Silence", "Insert silence with size of current selection to audio data",
 		 silence_callback, silence_xpm),
     GNOMEUIINFO_SEPARATOR,
@@ -2148,7 +1934,6 @@ GnomeUIInfo edit_menu[] = {
 		       paste_callback, GTK_STOCK_PASTE),
     GNOMEUIINFO_ITEM_STOCK(" Delete", "Delete current selection from audio data",
 		       delete_callback, GTK_STOCK_DELETE),
-#endif
 
     GNOMEUIINFO_ITEM(" Reverb", "Apply reverberation the current view or selection",
 		 reverb, amplify_xpm),
@@ -2220,12 +2005,6 @@ GnomeUIInfo settings_menu[] = {
 		 decrackle_set_preferences, NULL, GDK_semicolon),
     GNOMEUIINFO_ITEM_ACCEL("Denoise", "Set denoise parameters",
 		 denoise_set_preferences, NULL, GDK_l),
-    GNOMEUIINFO_ITEM("MP3 Simple Settings", "Set MP3 Simple Encoding parameters",
-		 set_mp3_simple_encoding_preferences, NULL),
-    GNOMEUIINFO_ITEM("MP3 Settings", "Set MP3 Encoding parameters",
-		 set_mp3_encoding_preferences, NULL),
-    GNOMEUIINFO_ITEM("Ogg Settings", "Set Ogg Encoding parameters",
-		 set_ogg_encoding_preferences, NULL),
     GNOMEUIINFO_ITEM_ACCELMOD("Preferences", "Program options",
 		 set_options, NULL, GDK_p, 4),
     GNOMEUIINFO_END
@@ -2245,17 +2024,6 @@ GnomeUIInfo help_menu[] = {
 	   0, 0, NULL},
     GNOMEUIINFO_END
 };
-
-GnomeUIInfo help_menu_old[] = {
-	  {GNOME_APP_UI_ITEM, 
-	   N_("About"), N_("Info about this program"),
-	   about, NULL, NULL, 
-	   GNOME_APP_PIXMAP_STOCK, GNOME_STOCK_ABOUT,
-	   0, 0, NULL},
-	   GNOMEUIINFO_SEPARATOR,
-	   GNOMEUIINFO_HELP("gwc"),
-	   GNOMEUIINFO_END
-      };
 
 GnomeUIInfo menubar[] = {
     GNOMEUIINFO_MENU_FILE_TREE(file_menu),
@@ -2333,10 +2101,6 @@ GnomeUIInfo edit_toolbar_info[] = {
 		 "Remove noise from  current view or selection",
 		 remove_noise, remove_noise_xpm),
 
-#ifdef TRUNCATE_OLD
-    GNOMEUIINFO_ITEM("Cut", "Truncate head or tail from audio data",
-		 cut_callback, cut_xpm),
-#else
     GNOMEUIINFO_ITEM("Silence", "Insert silence with size of current selection to audio data",
 		 silence_callback, silence_xpm),
     GNOMEUIINFO_SEPARATOR,
@@ -2348,7 +2112,6 @@ GnomeUIInfo edit_toolbar_info[] = {
 		       paste_callback, GTK_STOCK_PASTE),
     GNOMEUIINFO_ITEM_STOCK("Delete", "Delete current selection from audio data",
 		       delete_callback, GTK_STOCK_DELETE),
-#endif
     GNOMEUIINFO_END
 };
 
@@ -2516,7 +2279,7 @@ long time_to_sample(char *time, struct sound_prefs *p)
 
     return position;
 }
-
+/*
 long batch_atol(char *time)
 {
 	if( strcmp(time,"end") == 0 )
@@ -2532,226 +2295,7 @@ long batch_time_to_sample(char *time, struct sound_prefs *p)
 	else
 		return time_to_sample(time, p);
 }
-
-/* bj Sep 2003 re-write batch declick, add batch denoise, batch truncate */
-void batch(int argc, char **argv)
-{
-#define BYTIME 0
-#define BYSAMPLE 1
-
-    int type = BYTIME ; 
-
-    batch_mode = 1 ;
-
-	if( argv[3] == NULL )
-		usage(argv[0]);
-
-    if(!strcmp(argv[2], "batchs")) {
-	type = BYSAMPLE ;
-    }
-    if(!strcasecmp(argv[3], "declick")) {
-	if(argc < 7) {
-	    fprintf(stderr, "Usage: gwc <wavfile> <batch[s] declick sensitivity start_position stop_position>\n") ;
-	} else {
-		declick_detector_type = FFT_DETECT;
-	    double sens = atof(argv[4]) ;
-
-	    if(type == BYTIME) {
-		audio_view.selected_first_sample = time_to_sample(argv[5],&prefs) ;
-		audio_view.selected_last_sample = batch_time_to_sample(argv[6],&prefs) ;
-	    } else {
-		audio_view.selected_first_sample = atol(argv[5]) ;
-		audio_view.selected_last_sample = batch_atol(argv[6]) ;
-	    }
-
-	    audio_view.selection_region = TRUE;
-	    audio_view.channel_selection_mask = 0x03;
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(detect_only_widget), FALSE);
-	    click_data.max_clicks = MAX_CLICKS ;
-	    click_data.n_clicks = 0 ;
-	    g_print("Declick from %ld to %ld\n", audio_view.selected_first_sample, audio_view.selected_last_sample) ;
-	    declick_with_sensitivity(sens);
-	}
-    }
-    else if(!strcasecmp(argv[3], "declick-hpf")) {
-	if(argc < 7) {
-	    fprintf(stderr, "Usage: gwc <wavfile> <batch[s] declick sensitivity start_position stop_position>\n") ;
-	} else {
-		declick_detector_type = HPF_DETECT;
-	    double sens = atof(argv[4]) ;
-
-	    if(type == BYTIME) {
-		audio_view.selected_first_sample = time_to_sample(argv[5],&prefs) ;
-		audio_view.selected_last_sample = batch_time_to_sample(argv[6],&prefs) ;
-	    } else {
-		audio_view.selected_first_sample = atol(argv[5]) ;
-		audio_view.selected_last_sample = batch_atol(argv[6]) ;
-	    }
-
-	    audio_view.selection_region = TRUE;
-	    audio_view.channel_selection_mask = 0x03;
-	    gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(detect_only_widget), FALSE);
-	    click_data.max_clicks = MAX_CLICKS ;
-	    click_data.n_clicks = 0 ;
-	    g_print("Declick from %ld to %ld\n", audio_view.selected_first_sample, audio_view.selected_last_sample) ;
-	    declick_with_sensitivity(sens);
-	}
-    }
-    else if(!strcasecmp(argv[3], "amplify")) {
-	if(argc < 7) {
-	    fprintf(stderr, "Usage: gwc <wavfile> <batch[s] amplify amount start_position stop_position>\n") ;
-	} else {
-	    double amount = atof(argv[4]) ;
-	    long first, last ;
-
-	    if(type == BYTIME) {
-		audio_view.selected_first_sample = time_to_sample(argv[5],&prefs) ;
-		audio_view.selected_last_sample = batch_time_to_sample(argv[6],&prefs) ;
-	    } else {
-		audio_view.selected_first_sample = atol(argv[5]) ;
-		audio_view.selected_last_sample = batch_atol(argv[6]) ;
-	    }
-	    first = audio_view.selected_first_sample ;
-	    last = audio_view.selected_last_sample ;
-
-	    audio_view.selection_region = TRUE;
-	    audio_view.channel_selection_mask = 0x03;
-
-	    g_print("amplify from %ld to %ld\n", audio_view.selected_first_sample, audio_view.selected_last_sample) ;
-	    simple_amplify_audio(&prefs, first, last, audio_view.channel_selection_mask, amount) ;
-	}
-    }
-    else if(!strcasecmp(argv[3], "denoise")) {
-	if(argc < 8) {
-	    fprintf(stderr, "Usage: gwc <wavfile> <batch[s] denoise sample_start sample_end denoise_start denoise_end>\n") ;
-	} else {
-	    if(type == BYTIME) {
-		denoise_data.noise_start = time_to_sample(argv[4],&prefs);
-		denoise_data.noise_end = batch_time_to_sample(argv[5],&prefs);
-		audio_view.selected_first_sample = time_to_sample(argv[6],&prefs);
-		audio_view.selected_last_sample = batch_time_to_sample(argv[7],&prefs);
-	    } else {
-		denoise_data.noise_start = atol(argv[4]);
-		denoise_data.noise_end = batch_atol(argv[5]);
-		audio_view.selected_first_sample = atol(argv[6]);
-		audio_view.selected_last_sample = batch_atol(argv[7]);
-	    }
-
-	    audio_view.selection_region = TRUE;
-	    audio_view.channel_selection_mask = 0x03;
-	    get_region_of_interest(&denoise_data.denoise_start, &denoise_data.denoise_end, &audio_view) ;
-	    denoise_data.ready = TRUE ;
-	    load_denoise_preferences() ;
-	    print_denoise("batch remove_noise",&denoise_prefs) ;
-	    if(denoise_prefs.FFT_SIZE > (denoise_data.noise_end-denoise_data.noise_start+1)) {
-		fprintf(stderr, "FFT_SIZE must be <= # samples in noise sample!") ;
-		return;
-	    }
-	    g_print("Denoise from %ld to %ld using noise sample from %ld to %ld\n", denoise_data.denoise_start, denoise_data.denoise_end, denoise_data.noise_start, denoise_data.noise_end) ;
-	    push_status_text("Denoising selection") ;
-	    denoise(&prefs, &denoise_prefs, denoise_data.noise_start, denoise_data.noise_end,
-			denoise_data.denoise_start, denoise_data.denoise_end, audio_view.channel_selection_mask) ;
-	    resample_audio_data(&prefs, denoise_data.denoise_start, denoise_data.denoise_end) ;
-	    save_sample_block_data(&prefs) ;
-	    pop_status_text() ;
-	}
-    }
-    else if(!strcasecmp(argv[3], "normalize")) {
-	g_print("Normalize audiofile\n");
-	batch_normalize(&prefs,0,prefs.n_samples-1,prefs.n_channels > 1 ? 0x03 : 0x01);
-    }
-    else if(!strcasecmp(argv[3], "dsp")) {
-	if(argc < 6) {
-	    fprintf(stderr, "Usage: gwc <wavfile> <batch[s] dsp start_position stop_position>\n") ;
-	} else {
-	    long first, last ;
-
-	    if(type == BYTIME) {
-		audio_view.selected_first_sample = time_to_sample(argv[4],&prefs) ;
-		audio_view.selected_last_sample = batch_time_to_sample(argv[5],&prefs) ;
-	    } else {
-		audio_view.selected_first_sample = atol(argv[4]) ;
-		audio_view.selected_last_sample = batch_atol(argv[5]) ;
-	    }
-	    first = audio_view.selected_first_sample ;
-	    last = audio_view.selected_last_sample ;
-
-	    audio_view.selection_region = TRUE;
-	    audio_view.channel_selection_mask = 0x03;
-	    get_region_of_interest(&first, &last, &audio_view);
-	    filter_audio(&prefs, first, last, audio_view.channel_selection_mask);
-	    save_sample_block_data(&prefs);
-	}
-    }
-    else if(!strcasecmp(argv[3], "reverb")) {
-	if(argc < 6) {
-	    fprintf(stderr, "Usage: gwc <wavfile> <batch[s] reverb start_position stop_position>\n") ;
-	} else {
-	    long first, last ;
-
-	    if(type == BYTIME) {
-		audio_view.selected_first_sample = time_to_sample(argv[4],&prefs) ;
-		audio_view.selected_last_sample = batch_time_to_sample(argv[5],&prefs) ;
-	    } else {
-		audio_view.selected_first_sample = atol(argv[4]) ;
-		audio_view.selected_last_sample = batch_atol(argv[5]) ;
-	    }
-	    first = audio_view.selected_first_sample ;
-	    last = audio_view.selected_last_sample ;
-	    audio_view.selection_region = TRUE;
-	    audio_view.channel_selection_mask = 0x03;
-	    get_region_of_interest(&first, &last, &audio_view);
-	    reverb_audio(&prefs, first, last, audio_view.channel_selection_mask);
-	    save_sample_block_data(&prefs);
-	}
-    }
-    else if(!strcasecmp(argv[3], "truncate")) {
-	if(argc < 6) {
-	    fprintf(stderr, "Usage: gwc <wavfile> <batch[s] truncate keep_start keep_end>\n") ;
-	} else {
-	    long first, last ;
-    #ifdef TRUNCATE_OLD
-	    if(type == BYTIME) {
-		audio_view.truncate_head = time_to_sample(argv[4],&prefs) ;
-		audio_view.truncate_tail = batch_time_to_sample(argv[5],&prefs) ;
-	    } else {
-		audio_view.truncate_head = atol(argv[4]) ;
-		audio_view.truncate_tail = batch_atol(argv[5]) ;
-	    }
-
-	    g_print("Truncating.  Keeping samples %ld to %ld\n", audio_view.truncate_head, audio_view.truncate_tail) ;
-	    truncate_wavfile(&audio_view);
-	    audio_view.truncate_head = 0;
-	    audio_view.truncate_tail = audio_view.n_samples;
-    #else
-	    if(type == BYTIME) {
-		audio_view.selected_first_sample = time_to_sample(argv[4],&prefs) ;
-		audio_view.selected_last_sample = batch_time_to_sample(argv[5],&prefs) ;
-	    } else {
-		audio_view.selected_first_sample = atol(argv[4]) ;
-		audio_view.selected_last_sample = batch_atol(argv[5]) ;
-	    }
-	    audio_view.selection_region = TRUE;
-	    first = audio_view.selected_first_sample ;
-	    last = audio_view.selected_last_sample ;
-	    g_print("Truncating.  Keeping samples %ld to %ld\n", first, last);
-
-	    if(first == 0) {
-		long total_samples =  last-first+1 ;
-		sndfile_truncate(total_samples) ;
-	    } else {
-		truncate_wavfile(&audio_view, 0); /* 0 == don't save undo data */
-	    }
-    #endif
-	}
-    }
-
-    cleanup_and_close(&audio_view, &prefs);
-
-    batch_mode = 0 ;
-
-    return ;
-}
+*/
 
 int main(int argc, char *argv[])
 {
@@ -2818,11 +2362,6 @@ int main(int argc, char *argv[])
 
     load_preferences();
     
-    /* load all encoding preferences on start */
-    load_ogg_encoding_preferences();
-    load_mp3_encoding_preferences();
-    load_mp3_simple_encoding_preferences();
-
     /* create a new window */
     /*   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);  */
 
@@ -2845,15 +2384,6 @@ int main(int argc, char *argv[])
 
     /* Sets the border width of the window. */
     gtk_container_set_border_width(GTK_CONTAINER(main_window), 1);
-
-    /* Creates a new button with the label "Stop Recording". */
-
-    /* When the button receives the "clicked" signal, it will call the
-     * function stop() passing it NULL as its argument.  The stop()
-     * function is defined above. */
-
-    /*   g_signal_connect (GTK_OBJECT (stop_button), "clicked",  */
-    /*  		     GTK_SIGNAL_FUNC (stop), NULL);  */
 
     main_vbox = gtk_vbox_new(FALSE, 1);
     track_times_vbox = gtk_vbox_new(FALSE, 1);
@@ -3015,12 +2545,6 @@ int main(int argc, char *argv[])
     if (argc > 1) {
 	strcpy(wave_filename, argv[1]);
 	open_wave_filename();
-	if (argc > 2) {
-	    if ((!strcasecmp(argv[2], "batch")) || (!strcasecmp(argv[2], "batchs"))) {
-		batch(argc, argv);
-		return EXIT_SUCCESS;
-	    }
-	}
     }
 
     gtk_main();

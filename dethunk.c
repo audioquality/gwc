@@ -21,7 +21,6 @@
 
 #include <stdlib.h>
 #include <gnome.h>
-//#include "gtkledbar.h"
 #include "gwc.h"
 #include "stat.h"
 

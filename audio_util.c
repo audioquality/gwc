@@ -30,19 +30,8 @@
 #include <gtk/gtk.h>
 #include <sndfile.h>
 
-#ifdef HAVE_OGG
-#include "vorbis/codec.h"
-#include "vorbis/vorbisfile.h"
-#endif
-
 #include "gwc.h"
-
-#ifdef HAVE_MP3
-#include "mpg123.h"
-#endif
-
 #include "fmtheaders.h"
-#include "encoding.h"
 #include "audio_device.h"
 #include "soundfile.h"
 
@@ -65,25 +54,11 @@ long wavefile_data_start ;
 SNDFILE      *sndfile = NULL ;
 SF_INFO      sfinfo ;
 
-#ifdef HAVE_OGG
-OggVorbis_File oggfile ;
-#endif
-
-FILE *fp_ogg = NULL ;
-
-#ifdef HAVE_MP3
-mpg123_handle *fp_mp3 = NULL ;
-#endif
-
 int audiofileisopen = 0 ;
-long current_ogg_or_mp3_pos ;
 
 #define SNDFILE_TYPE 0x01
-#define OGG_TYPE 0x02
-#define MP3_TYPE 0x04
 
 int audio_type ;
-
 
 extern struct view audio_view ;
 extern struct sound_prefs prefs ;
@@ -265,9 +240,6 @@ long start_playback(char *output_device, struct view *v, struct sound_prefs *p, 
     long samples_per_block ;
 
     if(audio_type == SNDFILE_TYPE && sndfile == NULL) return 1 ;
-    #ifdef HAVE_OGG
-    if(audio_type == OGG_TYPE && fp_ogg == NULL) return 1 ;
-    #endif
 
     audio_device_close(1) ;
 
@@ -385,10 +357,6 @@ int process_audio()
 	} else {
 	    n_read = sf_readf_int(sndfile, p_int, n_samples_to_read) ;
 	}
-    } else {
-    #if defined(HAVE_MP3) || defined(HAVE_OGG)
-	n_read = read_raw_wavefile_data((char *)p_char, current_ogg_or_mp3_pos, current_ogg_or_mp3_pos+n_samples_to_read-1) ;
-    #endif
     }
 
     #define FEATHER_WIDTH 30000
@@ -519,66 +487,6 @@ void stop_playback(unsigned int force)
     audio_device_close(1-force) ;
 }
 
-void *wavefile_data ;
-#ifdef TRUNCATE_OLD
-void truncate_wavfile(struct view *v)
-{
-#define REALLY_TRUNCATE
-#ifndef REALLY_TRUNCATE
-    warning("Truncation temporailty disabled, while incorporating libsndfile...") ;
-#else
-    /* we must do 3 things:
-	1. Shift all samples forward by v->truncate_head
-	2. Rescan the sample blocks (along the way)
-	3. Physically truncate the size of the file on 
-	   the filesystem by (v->truncate_head + (n_samples-1)-v->truncate_tail) samples
-    */
-
-    long prev ;
-    long new ;
-    int n_in_buf ;
-    long first, last ;
-
-#define TMPBUFSIZE     (SBW*1000)
-    long left[TMPBUFSIZE], right[TMPBUFSIZE] ;
-
-    push_status_text("Truncating audio data") ;
-    update_status_bar(0.0, STATUS_UPDATE_INTERVAL, TRUE) ;
-
-    /* something like this, gotta buffer this or the disk head will
-       burn a hole in the platter */
-
-    if(v->truncate_head > 0) {
-
-	for(prev = v->truncate_head ; prev <= v->truncate_tail ; prev += TMPBUFSIZE) {
-	    update_status_bar((gfloat)(prev-v->truncate_head)/(gfloat)(v->truncate_tail-v->truncate_head), STATUS_UPDATE_INTERVAL, FALSE) ;
-	    last = MIN((prev+TMPBUFSIZE-1), v->truncate_tail) ;
-	    n_in_buf = read_wavefile_data(left, right, prev, last) ;
-	    new = prev - v->truncate_head ;
-	    first = new ;
-	    last = new + n_in_buf - 1 ;
-	    write_wavefile_data(left, right, first, last) ;
-	    resample_audio_data(&prefs, first, last) ;
-	}
-
-    }
-
-    prefs.n_samples = v->truncate_tail - v->truncate_head + 1 ;
-
-    if(1) save_sample_block_data(&prefs) ;
-
-    if(1) {
-	sf_count_t total_samples =  prefs.n_samples ;
-	if(sf_command(sndfile, SFC_FILE_TRUNCATE, &total_samples, sizeof(total_samples)))
-	    warning("Libsndfile reports truncation of audio file failed") ;
-    }
-
-    pop_status_text() ;
-
-#endif
-}
-#endif /* !TRUNCATE_OLD */
-
 void sndfile_truncate(long n_samples)
 {
     sf_count_t total_samples =  n_samples ;
@@ -589,34 +497,11 @@ void sndfile_truncate(long n_samples)
 int close_wavefile(struct view *v)
 {
     if(audio_type == SNDFILE_TYPE) {
-#ifdef TRUNCATE_OLD
-	int r ;
-
-	if(v->truncate_head > 0 || v->truncate_tail < v->n_samples -1) {
-	    r = yesnocancel("Part of the waveform is selected for truncation, do you really want to truncate?") ;
-	    if(r == 2) return 0 ;
-	    if(r == 0) truncate_wavfile(v) ;
-	}
-#endif /* TRUNCATE_OLD */
 	if(sndfile != NULL) {
 	    sf_close(sndfile) ;
 	}
 	audio_device_close(0) ;
 	sndfile = NULL ;
-#ifdef HAVE_OGG
-    } else if(audio_type == OGG_TYPE) {
-	if(fp_ogg != NULL) {
-	    ov_clear(&oggfile) ;
-	}
-	fp_ogg = NULL ;
-#endif
-#ifdef HAVE_MP3
-    } else if(audio_type == MP3_TYPE) {
-	if(fp_mp3 != NULL) {
-	    mpg123_close(fp_mp3) ;
-	}
-	fp_mp3 = NULL ;
-#endif
     }
 
     return 1 ;
@@ -722,67 +607,12 @@ void save_selection_as_wavfile(char *filename_new, struct view *v)
     save_as_wavfile(filename_new, v->selected_first_sample, v->selected_last_sample) ;
 }
 
-#ifdef HAVE_MP3
-int gwc_mpg123_open(char *filename)
-{
-    int r ;
-
-    mpg123_init() ;
-
-    fp_mp3 = mpg123_new(NULL,NULL) ;
-
-    r = mpg123_open(fp_mp3,filename) ;
-
-    if(r != MPG123_OK) {
-	mpg123_delete(fp_mp3) ;
-	fp_mp3 = NULL ;
-    }
-
-    return r ;
-}
-
-int gwc_mpg123_close(void)
-{
-    mpg123_close(fp_mp3) ;
-    mpg123_delete(fp_mp3) ;
-    mpg123_exit() ;
-    return 0 ;
-}
-#endif
-
-
 int is_valid_audio_file(char *filename)
 {
     SNDFILE *sndfile ;
     SF_INFO sfinfo ;
 
     sfinfo.format = 0 ;
-
-#ifdef HAVE_OGG
-    if((fp_ogg = fopen(filename, "r")) != NULL) {
-        if(ov_open(fp_ogg, &oggfile, NULL, 0) < 0) {
-            fclose(fp_ogg) ;
-            fp_ogg = NULL ;
-        } else {
-	    ov_clear(&oggfile) ;
-            fclose(fp_ogg) ;
-	    fp_ogg = NULL ;
-	    audio_type = OGG_TYPE ;
-	    return 1 ;
-	}
-    }
-#endif
-
-
-#ifdef HAVE_MP3
-    if(gwc_mpg123_open(filename) == MPG123_OK) {
-	gwc_mpg123_close() ;
-        fp_mp3 = NULL ;
-
-        audio_type = MP3_TYPE ;
-        return 1 ;
-    }
-#endif
 
     if((sndfile = sf_open(filename, SFM_RDWR, &sfinfo)) != NULL) {
 	sf_close(sndfile) ;
@@ -836,42 +666,6 @@ struct sound_prefs open_wavefile(char *filename, struct view *v)
 	} ;
     }
 
-#ifdef HAVE_OGG
-    if(audio_type == OGG_TYPE) {
-        if((fp_ogg = fopen(filename, "r")) != NULL) {
-            if(ov_open(fp_ogg, &oggfile, NULL, 0) < 0) {
-                /* Open failed so print an error message. */
-
-                char buf[80+PATH_MAX] ;
-                snprintf(buf, sizeof(buf), "Failed to open  %s", filename) ;
-                warning(buf) ;
-		wfh.successful_open = FALSE ;
-		fclose(fp_ogg) ;
-		fp_ogg = NULL ;
-                return wfh ;
-            }
-        }
-
-    }
-#endif
-
-#ifdef HAVE_MP3
-    if(audio_type == MP3_TYPE) {
-	if(gwc_mpg123_open(filename) != MPG123_OK) {
-	    /* Open failed so print an error message. */
-
-	    char buf[80+PATH_MAX] ;
-	    snprintf(buf, sizeof(buf), "Failed to open  %s", filename) ;
-	    warning(buf) ;
-	    wfh.successful_open = FALSE ;
-	    fp_mp3 = NULL ;
-	    return wfh ;
-        }
-
-    }
-#endif
-
-
     wfh.wavefile_fd = 1 ;
 
 
@@ -904,50 +698,6 @@ struct sound_prefs open_wavefile(char *filename, struct view *v)
 	    return wfh ;
 	}
     }
-
-#ifdef HAVE_OGG
-    if(audio_type == OGG_TYPE) {
-        vorbis_info *vi = ov_info(&oggfile,-1) ;
-        wfh.rate = vi->rate ;
-        wfh.n_channels = vi->channels ;
-        wfh.stereo = stereo = vi->channels-1 ;
-
-        wfh.n_samples = ov_pcm_total(&oggfile,-1) ;
-
-        BYTESPERSAMPLE=2 ;
-        MAXSAMPLEVALUE = 1 << 15 ;
-
-        current_ogg_or_mp3_pos = 0 ;
-	fprintf(stderr, "Oggfile: FRAMESIZE=%d\n", BYTESPERSAMPLE*wfh.n_channels) ;
-	wfh.successful_open = TRUE ;
-    }
-#endif
-
-#ifdef HAVE_MP3
-    if(audio_type == MP3_TYPE) {
-	long rate ;
-	int channels ;
-	int encoding ;
-	mpg123_getformat(fp_mp3,&rate,&channels,&encoding) ;
-	mpg123_scan(fp_mp3) ;
-        wfh.n_samples = mpg123_length(fp_mp3) ;
-        wfh.rate = rate ;
-        wfh.n_channels = channels ;
-        wfh.stereo = stereo = channels-1 ;
-
-
-        BYTESPERSAMPLE=2 ;
-        MAXSAMPLEVALUE = 1 << 15 ;
-
-	off_t pos = mpg123_tell(fp_mp3) ;
-	off_t curr_frame = mpg123_tellframe(fp_mp3) ;
-
-        current_ogg_or_mp3_pos = 0 ;
-	fprintf(stderr, "Mp3file: FRAMESIZE=%d, pos=%d, frame=%d\n", BYTESPERSAMPLE*wfh.n_channels, (int)pos, (int)curr_frame) ;
-	wfh.successful_open = TRUE ;
-    }
-#endif
-
     FRAMESIZE = BYTESPERSAMPLE*wfh.n_channels ;
     PLAYBACK_FRAMESIZE = 2*wfh.n_channels ;
 
@@ -964,49 +714,6 @@ void position_wavefile_pointer(long sample_number)
 {
     if(audio_type == SNDFILE_TYPE) {
 	sf_seek(sndfile, sample_number, SEEK_SET) ;
-    } else if(audio_type == MP3_TYPE) {
-#ifdef HAVE_MP3
-        if(current_ogg_or_mp3_pos != sample_number) {
-	    off_t new_pos ;
-            current_ogg_or_mp3_pos = sample_number ;
-	    if(sample_number != 0) {
-		unsigned char buf[1152*4] ;
-		new_pos = mpg123_seek(fp_mp3,sample_number,SEEK_SET) ;
-		off_t curr_frame = mpg123_tellframe(fp_mp3) ;
-/*  		if(curr_frame > 0) curr_frame-- ;  */
-		mpg123_seek_frame(fp_mp3,curr_frame,SEEK_SET) ;
-		int presample_number = (int)mpg123_tell(fp_mp3) ;
-/*  		if(presample_number > 0) presample_number-- ;  */
-		int samples_to_read = sample_number - presample_number ;
-		new_pos = mpg123_seek(fp_mp3,presample_number,SEEK_SET) ;
-
-/*  		    fprintf(stderr, "position_wf_ptr, samples_to_read:%d > 1152!!\n", samples_to_read) ;  */
-/*  		    fprintf(stderr, "curr_frame:%d presample_number:%d\n", curr_frame,presample_number) ;  */
-/*  		    fprintf(stderr, "position_wf_ptr, want:%d got%d\n", (int)sample_number, (int)new_pos) ;  */
-		if(samples_to_read > 1152) {
-		    exit(1) ;
-		}
-
-		unsigned int done ;
-		int err ;
-
-		err = mpg123_read(fp_mp3, buf, samples_to_read*FRAMESIZE, &done) ;
-	    } else {
-		new_pos = mpg123_seek(fp_mp3,sample_number,SEEK_SET) ;
-		nonzero_seek = 0 ;
-	    }
-/*  	    fprintf(stderr, "position_wf_ptr, want:%d got%d\n", (int)sample_number, (int)new_pos) ;  */
-        }
-#endif
-
-    } else {
-#ifdef HAVE_OGG
-        if(current_ogg_or_mp3_pos != sample_number) {
-            fprintf(stderr, "pos_wv_ptr, was %ld, want %ld\n", current_ogg_or_mp3_pos, sample_number) ;
-            ov_pcm_seek(&oggfile, sample_number) ;
-            current_ogg_or_mp3_pos = sample_number ;
-        }
-#endif
     }
 }
 
@@ -1023,41 +730,6 @@ int read_raw_wavefile_data(char buf[], long first, long last)
 	n_bytes_read = sf_read_raw(sndfile, buf, bufsize) ;
 	return n_bytes_read/FRAMESIZE ;
     }
-
-#ifdef HAVE_OGG
-    if(audio_type == OGG_TYPE) {
-	int ret ;
-	while(n_read < n) {
-            ret = ov_read(&oggfile, (char *)&buf[n_bytes_read], bufsize-n_bytes_read,0,2,1,&current_ogg_bitstream) ;
-	    if(ret > 0) {
-		n_read += ret/FRAMESIZE ;
-		n_bytes_read += ret ;
-	    } else {
-		break ;
-	    }
-	}
-	current_ogg_or_mp3_pos += n_read ;
-	return n_read ;
-    }
-#endif
-
-#ifdef HAVE_MP3
-    if(audio_type == MP3_TYPE) {
-	size_t done ;
-	int err ;
-	struct mpg123_frameinfo mi ;
-	while(n_read < n) {
-	    err = mpg123_read(fp_mp3, (unsigned char *)&buf[n_bytes_read], bufsize-n_bytes_read, &done) ;
-	    if(err != MPG123_OK) fprintf(stderr, "read had a problem, %d\n", err) ;
-	    err = mpg123_info(fp_mp3, &mi) ;
-/*  	    fprintf(stderr, "fs %d\n", (int)mi.framesize) ;  */
-	    n_bytes_read += done ;
-	    n_read += done/FRAMESIZE ;
-	}
-	current_ogg_or_mp3_pos += n_read ;
-	return n_read ;
-    }
-#endif
 
     return n_read ;
 }
@@ -1097,22 +769,6 @@ int read_wavefile_data(long left[], long right[], long first, long last)
 	if(audio_type == SNDFILE_TYPE) {
 	    n_read = sf_read_int(sndfile, p_int, n_this) ;
 	}
-
-#ifdef HAVE_OGG
-	if(audio_type == OGG_TYPE) {
-            n_read = ov_read(&oggfile, (char *)p_int, n_this*FRAMESIZE,0,2,1,&current_ogg_bitstream) ;
-	    n_read /= FRAMESIZE ;
-	}
-#endif
-
-#ifdef HAVE_MP3
-	if(audio_type == MP3_TYPE) {
-/*  	    size_t done ;  */
-/*  	    int err = mpg123_read(fp_mp3, (unsigned char *)&buf[n_bytes_read], bufsize-n_bytes_read, &done) ;  */
-/*  	    if(err != MPG123_OK) fprintf(stderr, "read had a problem, %d\n", err) ;  */
-/*  	    n_read = done/FRAMESIZE ;  */
-	}
-#endif
 
 #endif
 

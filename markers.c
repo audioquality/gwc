@@ -33,7 +33,6 @@
 #include <signal.h>
 
 #include <gnome.h>
-#include "gtkledbar.h"
 #include "gwc.h"
 
 long cdtext_length;

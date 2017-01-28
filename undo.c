@@ -29,13 +29,11 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include "gwc.h"
-#ifndef TRUNCATE_OLD
 #include "soundfile.h"
 
 #define UNDO_OVERWRITE 0
 #define UNDO_INSERT    1
 #define UNDO_REMOVE    2
-#endif /* TRUNCATE_OLD */
 
 static char current_undo_msg[200] ;
 static int undo_fd = -1 ;
@@ -81,87 +79,74 @@ int start_save_undo(char *undo_msg, struct view *v)
 
 extern int FRAMESIZE ;
 
-#ifndef TRUNCATE_OLD
 static int save_undo_data_impl(long first_sample, long last_sample,
                                int undo_type, int status_update_flag)
-#else
-int save_undo_data(long first_sample, long last_sample, struct sound_prefs *p, int status_update_flag)
-#endif
 {
     const int BLOCK_SIZE = 1024 ;
     char buf[BLOCK_SIZE * FRAMESIZE] ;
     long curr ;
     gfloat n_sample = (last_sample-first_sample+1) ;
-
-#ifndef TRUNCATE_OLD
     if (undo_type != UNDO_INSERT) {
-#endif
-    if(n_sample*FRAMESIZE > 10000000) {
-	GtkWidget *dialog ;
-	char buf[200] ;
-	int ret ;
+      if(n_sample*FRAMESIZE > 10000000) {
+	  GtkWidget *dialog ;
+	  char buf[200] ;
+	  int ret ;
 
-	sprintf(buf, "Undo will need %7.2f Mbytes of disk space (skipping undo commits changes to your original audio file)", n_sample*FRAMESIZE/1000000.0) ;
+	  sprintf(buf, "Undo will need %7.2f Mbytes of disk space (skipping undo commits changes to your original audio file)", n_sample*FRAMESIZE/1000000.0) ;
 
-	dialog = gtk_dialog_new_with_buttons(buf, NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
-	   "Skip undo", 0, "Cancel edit action", 1, "Save undo data", 2, NULL) ;
+	  dialog = gtk_dialog_new_with_buttons(buf, NULL, GTK_DIALOG_DESTROY_WITH_PARENT,
+	     "Skip undo", 0, "Cancel edit action", 1, "Save undo data", 2, NULL) ;
 
-	ret = gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_destroy(dialog) ;
+	  ret = gtk_dialog_run(GTK_DIALOG(dialog));
+	  gtk_widget_destroy(dialog) ;
 
-	if( ret!= 2) { /* Dont save undo */
-	    undo_level-- ;
-	    close(undo_fd) ;
-	    undo_fd = -1 ;
-	    if(ret == 1 || ret == -1)  /* we cancelled */
-		return 1 ;
-	    else
-		return 0 ;
-	}
-
+	  if( ret!= 2) { /* Dont save undo */
+	      undo_level-- ;
+	      close(undo_fd) ;
+	      undo_fd = -1 ;
+	      if(ret == 1 || ret == -1)  /* we cancelled */
+		  return 1 ;
+	      else
+		  return 0 ;
+	  }
+      }
     }
-#ifndef TRUNCATE_OLD
-    }
-#endif
+
 
     write(undo_fd, (char *)&first_sample, sizeof(first_sample)) ;
     write(undo_fd, (char *)&last_sample, sizeof(last_sample)) ;
-#ifndef TRUNCATE_OLD
     write(undo_fd, (char *)&undo_type, sizeof(undo_type)) ;
 
     if (undo_type != UNDO_INSERT) {
-#endif        
-    if(status_update_flag)
-	update_status_bar(0.0, STATUS_UPDATE_INTERVAL, TRUE) ;
+      if(status_update_flag)
+	  update_status_bar(0.0, STATUS_UPDATE_INTERVAL, TRUE) ;
 
-    //long blocks = (last_sample - first_sample + 1) / BLOCK_SIZE;
+      //long blocks = (last_sample - first_sample + 1) / BLOCK_SIZE;
 
-    for(curr = first_sample ; curr <= last_sample ; curr += BLOCK_SIZE) {
-        long end;
-	gfloat p = (gfloat)(curr-first_sample)/n_sample ;
+      for(curr = first_sample ; curr <= last_sample ; curr += BLOCK_SIZE) {
+	  long end;
+	  gfloat p = (gfloat)(curr-first_sample)/n_sample ;
 
-	if(status_update_flag)
-	    update_status_bar(p,STATUS_UPDATE_INTERVAL,FALSE) ;
+	  if(status_update_flag)
+	      update_status_bar(p,STATUS_UPDATE_INTERVAL,FALSE) ;
 
-        end = curr + BLOCK_SIZE - 1;
-        if (end > last_sample)
-           end = last_sample;
-	read_raw_wavefile_data(buf, curr, end) ;
-	if (write(undo_fd, buf, FRAMESIZE * (end - curr + 1)) != FRAMESIZE * (end - curr + 1) ) {
-            warning("Error saving undo data (out of disk space?), program will exit");
-            exit(1);
-        }
+	  end = curr + BLOCK_SIZE - 1;
+	  if (end > last_sample)
+	     end = last_sample;
+	  read_raw_wavefile_data(buf, curr, end) ;
+	  if (write(undo_fd, buf, FRAMESIZE * (end - curr + 1)) != FRAMESIZE * (end - curr + 1) ) {
+	      warning("Error saving undo data (out of disk space?), program will exit");
+	      exit(1);
+	  }
+      }
     }
-#ifndef TRUNCATE_OLD
-    }
-#endif
+
     if(status_update_flag)
 	update_status_bar(0.0, STATUS_UPDATE_INTERVAL, TRUE) ;
 
     return 0 ;
 }
 
-#ifndef TRUNCATE_OLD
 int save_undo_data(long first_sample, long last_sample, struct sound_prefs *p, int status_update_flag)
 {
     return save_undo_data_impl(first_sample, last_sample, UNDO_OVERWRITE, status_update_flag);
@@ -176,7 +161,6 @@ int save_undo_data_insert(long first_sample, long last_sample, int status_update
 {
     return save_undo_data_impl(first_sample, last_sample, UNDO_INSERT, status_update_flag);
 }
-#endif /* !TRUNCATE_OLD */
 
 int close_undo(void)
 {
@@ -202,9 +186,8 @@ int undo(struct view *v, struct sound_prefs *p)
     char buf[BLOCK_SIZE * FRAMESIZE] ;
     off_t *data_start_pos ;
     long total_sections;
-#ifndef TRUNCATE_OLD
     int undo_type;
-#endif
+
     if(undo_level == 0 || undo_fd != -1) {
 	warning("Nothing to undo!") ;
 	return undo_level ;
@@ -236,17 +219,13 @@ int undo(struct view *v, struct sound_prefs *p)
 
     while(read(undo_fd, (char *)&first_sample, sizeof(first_sample)) == sizeof(first_sample) ) {
 	read(undo_fd, (char *)&last_sample, sizeof(last_sample)) ;
-#ifndef TRUNCATE_OLD
 	read(undo_fd, (char *)&undo_type, sizeof(undo_type)) ;
-#endif
 #if 0
 	for(curr = first_sample ; curr <= last_sample ; curr++) {
 	    read(undo_fd, (char *)buf, sizeof(short)*2) ;
 	}
 #endif
-#ifndef TRUNCATE_OLD
         if (undo_type != UNDO_INSERT)
-#endif
         lseek(undo_fd, (off_t)((last_sample - first_sample + 1) * FRAMESIZE), SEEK_CUR);
 	n_sections++ ;
 	if(n_sections == n_sections_max) {
@@ -265,7 +244,6 @@ int undo(struct view *v, struct sound_prefs *p)
 
 	read(undo_fd, (char *)&first_sample, sizeof(first_sample)) ;
 	read(undo_fd, (char *)&last_sample, sizeof(last_sample)) ;
-#ifndef TRUNCATE_OLD
 	read(undo_fd, (char *)&undo_type, sizeof(undo_type)) ;
 
         if (undo_type == UNDO_INSERT) {
@@ -277,7 +255,7 @@ int undo(struct view *v, struct sound_prefs *p)
         }
 
         if (undo_type != UNDO_INSERT) {
-#endif
+
         //long blocks = (last_sample - first_sample + 1) / BLOCK_SIZE;
         for(curr = first_sample ; curr <= last_sample ; curr += BLOCK_SIZE) {
               long end;
@@ -291,9 +269,6 @@ int undo(struct view *v, struct sound_prefs *p)
 	    read(undo_fd, (char *)buf, FRAMESIZE * (end - curr + 1)) ;
 	    write_raw_wavefile_data(buf, curr, end) ;
 	}
-#ifdef TRUNCATE_OLD
-	resample_audio_data(p, first_sample, last_sample)  ;
-#else
         }
         if (undo_type == UNDO_INSERT || undo_type == UNDO_REMOVE) {
             p->n_samples = soundfile_count_samples();
@@ -308,7 +283,6 @@ int undo(struct view *v, struct sound_prefs *p)
         } else {
             resample_audio_data(p, first_sample, last_sample);
         }
-#endif
     }
 
     save_sample_block_data(p) ;

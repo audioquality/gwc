@@ -30,10 +30,6 @@ int audioedit_copy_selection(struct view *v);
 int audioedit_paste_selection(struct view *v);
 int audioedit_delete_selection(struct view *v);
 int audioedit_insert_silence(struct view *v);
-#ifdef TRUNCATE_OLD
-void truncate_wavfile(struct view *v);
-#else
 void truncate_wavfile(struct view *v, int save_undo);
-#endif
 #endif /* AUDIO_EDIT_H */
 

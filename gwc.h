@@ -94,11 +94,6 @@
 #define MARKER_RESET_VALUE -1000000000	/* (large negative long) markers to be completely
 					    off the screen when they are reset */
 
-/* defs for encoding */
-#define GWC_OGG 1
-#define GWC_MP3 2
-#define GWC_MP3_SIMPLE 3
-
 
 struct sound_prefs {
     int playback_bits ;
@@ -149,9 +144,6 @@ struct view {
     int selection_region ;
     int channel_selection_mask ;
     long n_samples ;
-#ifdef TRUNCATE_OLD
-    long truncate_head, truncate_tail ;
-#endif /* TRUNCATE_OLD */
 } ;
 
 struct sample_block {
@@ -222,9 +214,7 @@ char *do_declick_hpf(struct sound_prefs *p, long noise_start, long noise_end, in
 
 int do_decrackle(struct sound_prefs *p, long noise_start, long noise_end, int channel_selection_mask, double level, gint nmax, gint width) ;
 void estimate_region(fftw_real data[], int firstbad, int lastbad, int siglen) ;
-#ifndef TRUNCATE_OLD
 void resize_sample_buffer(struct sound_prefs *p);
-#endif
 void fill_sample_buffer(struct sound_prefs *p) ;
 void filter_audio(struct sound_prefs *p, long first, long last, int channel_mask) ;
 int  filter_dialog(struct sound_prefs current, struct view *) ;
@@ -240,9 +230,6 @@ double high_pass_filter(fftw_real x[], int N) ;
 void info(char *msg) ;
 int is_valid_audio_file(char *filename) ;
 void load_denoise_preferences(void) ;
-void load_mp3_encoding_preferences(void);
-void load_mp3_simple_encoding_preferences(void);
-void load_ogg_encoding_preferences(void);
 int load_sample_block_data(struct sound_prefs *p) ;
 void main_redraw(int cursor_flag, int redraw_data) ;
 void mark_songs(GtkWidget * widget, gpointer data) ;
@@ -270,32 +257,17 @@ void rescan_sample_buffer(struct sound_prefs *p) ;
 void reverb_audio(struct sound_prefs *p, long first, long last, int channel_mask) ;
 int  reverb_dialog(struct sound_prefs current, struct view *) ;
 int  sample_to_pixel(struct view *v, long sample) ;
-void save_cdrdao_tocs(GtkWidget * widget, gpointer data) ;
-void save_cdrdao_tocp(GtkWidget * widget, gpointer data) ;
 void save_denoise_preferences(void) ;
-void save_ogg_encoding_preferences(void);
-void save_mp3_encoding_preferences(void);
-void save_mp3_simple_encoding_preferences(void);
-int partial_save_encoding_mp3(char *filename,char *filename_new,long first_sample,long total_samples);
-int save_encoding_ogg(char *filename,char *filename_new);
 void save_preferences(void);
 void save_sample_block_data(struct sound_prefs *p) ;
 void save_as_wavfile(char *filename_new, long first_sample, long last_sample) ;
 void save_selection_as_wavfile(char *filename_new, struct view *v) ;
-void save_selection_as_encoded(int fmt,char *oldname,char *filename_new, struct view *v, char *trackname) ;
-int  encode(int fmt,char *origname, char *newname,long start,long length, char *trackname);
-int start_encode( int mode,char *newfilename,long start,long length, char *origfilename);
 
 int save_undo_data(long first_sample, long last_sample, struct sound_prefs *p, int status_update_flag) ;
-#ifndef TRUNCATE_OLD
 int save_undo_data_remove(long first_sample, long last_sample, int status_update_flag);
 int save_undo_data_insert(long first_sample, long last_sample, int status_update_flag);
-#endif
 void seek_to_audio_position(long playback_position) ;
 void set_options(GtkWidget * widget, gpointer data) ;
-void set_mp3_simple_encoding_preferences(GtkWidget * widget, gpointer data);
-void set_mp3_encoding_preferences(GtkWidget * widget, gpointer data);
-void set_ogg_encoding_preferences(GtkWidget * widget, gpointer data);
 void set_playback_cursor_position(struct view *v) ;
 long get_playback_position() ;
 void set_status_text(gchar *msg) ;
@@ -304,11 +276,9 @@ void sndfile_truncate(long total_samples) ;
 struct sound_prefs sound_pref_dialog(struct sound_prefs current) ;
 void stats(double x[], int n, double *pMean, double *pStderr, double *pVar, double *pCv, double *pStddev) ;
 void resample_audio_data(struct sound_prefs *p, long first, long last) ;
-int  start_recording(char *input_device, char *filename) ;
 long start_playback(char *output_device, struct view *v, struct sound_prefs *p, double seconds_per_block, double seconds_to_preload) ;
 int  start_monitor(char *input_device) ;
 void stop_playback(unsigned int force) ;
-void stop_recording(void) ;
 int start_save_undo(char *undo_msg, struct view *v) ;
 /* void sum_sample_block(struct sample_block *sb, double left[], double right[], long n) ; */
 void sum_sample_block(struct sample_block *sb, fftw_real left[], fftw_real right[], long n) ;
@@ -324,10 +294,6 @@ int  write_raw_wavefile_data(char buf[], long first, long last) ;
 int  write_wavefile_data(long left[], long right[], long first, long last) ;
 int write_wavefile_data_to_fd(long left[], long right[], long first, long last, int fd) ;
 
-/* bj 9/6/03 added */
-#ifdef TRUNCATE_OLD
-void truncate_wavfile(struct view *v);
-#endif
 void start_timer(void);
 void stop_timer(char *message);
 void batch_normalize(struct sound_prefs *p, long first , long last, int channel_mask);
