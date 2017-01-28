@@ -41,7 +41,6 @@
 #include <libgnomeui/libgnomeui.h>
 #include <libgnomeui/gnome-window-icon.h> /* gnome_window_icon_set_default_from_file
                                            * ...frank 31.08.03  */
-#include "gtkledbar.h"
 #include "encoding.h"
 #include "soundfile.h"
 #include "audio_edit.h"
@@ -990,11 +989,10 @@ void scale_down_callback(GtkWidget * widget, gpointer data)
     }
 }
 
-/* This is a callback function. The data arguments are ignored
-* in this example. More on callbacks below. */
 void stop_all_playback_functions(GtkWidget * widget, gpointer data)
 {
     audio_playback = FALSE;
+    audio_is_looping = FALSE;
     
     if (playback_timer != -1) {
 	gtk_timeout_remove(playback_timer);
@@ -1017,9 +1015,6 @@ void stop_all_playback_functions(GtkWidget * widget, gpointer data)
 	    audio_view.last_sample = prefs.n_samples - 1;
 	set_scroll_bar(prefs.n_samples - 1, audio_view.first_sample, audio_view.last_sample);
     }
-    
-    led_bar_light_percent(dial[0], 0.0);
-    led_bar_light_percent(dial[1], 0.0);
 }
 
 void gnome_flush(void)
@@ -1087,15 +1082,9 @@ gint update_cursor(gpointer data)
  */
 gint play_a_block(gpointer data)
 {
-    gfloat l, r;
-    
-    if (audio_playback == TRUE) {
-      process_audio(&l, &r);
-      led_bar_light_percent(dial[0], l);
-      led_bar_light_percent(dial[1], r);
-    }
-    
-    return (TRUE);
+  if (audio_playback)
+    process_audio();
+  return (TRUE);
 }
 
 /* Play audio 
@@ -1138,13 +1127,12 @@ void start_gwc_playback(GtkWidget * widget, gpointer data)
 	playback_timer = gtk_timeout_add(playback_millisec, play_a_block, NULL);
 	cursor_timer = gtk_timeout_add(cursor_millisec, update_cursor, NULL);
 
-	play_a_block(NULL);
+	//play_a_block(NULL);
 	//update_cursor(NULL);
     }
 
-    audio_debug_print("leaving start_gwc_playback with audio_playback=%d\n", audio_playback) ;
-
-    audio_is_looping = FALSE ;
+    audio_debug_print("leaving start_gwc_playback with audio_playback=%d\n", audio_playback);
+    
 }
 
 void detect_only_func(GtkWidget * widget, gpointer data)
@@ -1570,7 +1558,6 @@ gboolean  key_press_cb(GtkWidget * widget, GdkEventKey * event, gpointer data)
 		if ((event->state & GDK_CONTROL_MASK) || (event->state & GDK_SHIFT_MASK))
 		  audio_is_looping = TRUE;
 	    } else {
-	      audio_is_looping = FALSE;
 	      stop_all_playback_functions(widget, data);
 	      // repaint cursor
 	      main_redraw(TRUE, TRUE);
@@ -2966,20 +2953,11 @@ int main(int argc, char *argv[])
     l_last_time = mk_label_and_pack(GTK_BOX(times_vbox), "Last 0:00:000");
     l_selected_time = mk_label_and_pack(GTK_BOX(times_vbox), "Selected 0:00:000");
     l_samples = mk_label_and_pack(GTK_BOX(times_vbox), "Samples: 0");
-
-    for (int i = 0; i < 2; i++) {
-	dial[i] = led_bar_new(20, 0);
-	gtk_box_pack_start(GTK_BOX(led_vbox), dial[i], TRUE, TRUE, 0);
-	gtk_widget_show(dial[i]);
-    }
-    led_bar_light_percent(dial[0], (0.0));
-    led_bar_light_percent(dial[1], (0.0));
     
     gtk_box_pack_start(GTK_BOX(bottom_hbox), led_vbox, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(bottom_hbox), track_times_vbox, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(bottom_hbox), times_vbox, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(main_vbox), bottom_hbox, FALSE, TRUE, 0);
-
 
     detect_only_box = gtk_hbox_new(FALSE, 10);
     detect_only_widget = gtk_check_button_new_with_label("Detect, do not repair clicks");
