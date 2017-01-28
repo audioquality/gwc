@@ -718,13 +718,17 @@ void decrackle(GtkWidget * widget, gpointer data)
 void noise_sample(GtkWidget * widget, gpointer data)
 {
     if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-	file_processing = TRUE;
-	get_region_of_interest(&denoise_data.noise_start,
-			       &denoise_data.noise_end, &audio_view);
-	denoise_data.ready = TRUE;
-	load_denoise_preferences() ;
-	//print_noise_sample(&prefs, &denoise_prefs, denoise_data.noise_start, denoise_data.noise_end) ;
-	file_processing = FALSE;
+	if (audio_view.selection_region == TRUE) {
+	  file_processing = TRUE;
+	  get_region_of_interest(&denoise_data.noise_start, &denoise_data.noise_end, &audio_view);
+	  denoise_data.ready = TRUE;
+	  load_denoise_preferences() ;
+	  //print_noise_sample(&prefs, &denoise_prefs, denoise_data.noise_start, denoise_data.noise_end) ;
+	  file_processing = FALSE;
+	  set_status_text("Noise sample taken");
+	} else {
+	  set_status_text("First you have to select a portion of the audio with pure noise");
+	}
     }
 }
 
