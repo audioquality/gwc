@@ -37,10 +37,7 @@
 
 #include "gwc.h"
 #include <gtk/gtk.h>
-#include <libgnome/libgnome.h>
-#include <libgnomeui/libgnomeui.h>
-#include <libgnomeui/gnome-window-icon.h> /* gnome_window_icon_set_default_from_file
-                                           * ...frank 31.08.03  */
+
 #include "soundfile.h"
 #include "audio_edit.h"
 #include <sndfile.h>
@@ -96,6 +93,7 @@ GtkWidget *transport_toolbar;
 /* The file selection widget */
 GtkWidget *file_selector;
 
+struct common_prefs app_prefs;
 struct sound_prefs prefs;
 struct denoise_prefs denoise_prefs;
 struct view audio_view;
@@ -292,6 +290,8 @@ void load_preferences(void)
     gnome_config_push_prefix(APPNAME"/config/");
     strcpy(pathname, gnome_config_get_string("pathname=./"));
     strcpy(last_filename, gnome_config_get_string("last_filename=./"));
+    app_prefs.window_width = gnome_config_get_int("window_width=1200");
+    app_prefs.window_height = gnome_config_get_int("window_height=800");
     prefs.rate = gnome_config_get_int("rate=44100");
     prefs.bits = gnome_config_get_int("bits=16");
     prefs.stereo = gnome_config_get_int("stereo=1");
@@ -321,6 +321,8 @@ void save_preferences(void)
     gnome_config_push_prefix(APPNAME"/config/");
     gnome_config_set_string("pathname", pathname);
     gnome_config_set_string("last_filename", last_filename);
+    gnome_config_set_int("window_width", app_prefs.window_width);
+    gnome_config_set_int("window_height", app_prefs.window_height);
     gnome_config_set_int("rate", prefs.rate);
     gnome_config_set_int("bits", prefs.bits);
     gnome_config_set_int("stereo", prefs.stereo);
@@ -2204,6 +2206,9 @@ static gint audio_area_configure_event(GtkWidget * widget, GdkEventConfigure * e
     audio_view.canvas_height = widget->allocation.height;
     main_redraw(FALSE, TRUE);
 
+    // remember current window size
+    gtk_window_get_size (GTK_WINDOW(main_window), &app_prefs.window_width, &app_prefs.window_height);
+
     return TRUE;
 }
 
@@ -2239,25 +2244,6 @@ GtkWidget *mk_label_and_pack(GtkBox * box, char *text)
     return w;
 }
 
-void gwc_signal_handler(int sig)
-{
-    if (close_wavefile(&audio_view)) {
-	save_preferences();
-	undo_purge();
-    }
-
-    switch (sig) {
-    case SIGSEGV:
-	display_message("SIGSEGV: Segmentation Fault", "Fatal");
-	break;
-    case SIGBUS:
-	display_message("Bus Error", "Fatal");
-	break;
-    }
-
-    exit(1);
-}
-
 long time_to_sample(char *time, struct sound_prefs *p)
 {
     int nf;
@@ -2279,23 +2265,6 @@ long time_to_sample(char *time, struct sound_prefs *p)
 
     return position;
 }
-/*
-long batch_atol(char *time)
-{
-	if( strcmp(time,"end") == 0 )
-		return prefs.n_samples;
-	else
-		return atol(time);
-}
-
-long batch_time_to_sample(char *time, struct sound_prefs *p)
-{
-	if( strcmp(time,"end") == 0 )
-		return p->n_samples;
-	else
-		return time_to_sample(time, p);
-}
-*/
 
 int main(int argc, char *argv[])
 {
@@ -2343,7 +2312,7 @@ int main(int argc, char *argv[])
 
     /* This is called in all GTK applications. Arguments are parsed
      * from the command line and are returned to the application. */
-    /*      gtk_init(&argc, &argv);  */
+    //gtk_init(&argc, &argv);
 
     #define PREFIX "."
     #define SYSCONFDIR "."
@@ -2356,15 +2325,16 @@ int main(int argc, char *argv[])
       exit (1);
     }
 
-    gnome_window_icon_set_default_from_file("gwc-logo.png");
-    main_window = gnome_app_new("gwc", "Dehiss, declick audio file");
+    main_window = gnome_app_new("gwc", "Gnome Wave Cleaner - Declick & Denoise Audio");
+    //gtk_window_set_icon(GTK_WINDOW(main_window), gdk_pixbuf_new_from_file("gwc-logo.png", NULL));
+    gtk_window_set_icon_name (GTK_WINDOW(main_window), "media-tape");
     gnome_app_create_menus(GNOME_APP(main_window), menubar);
 
     load_preferences();
     
-    /* create a new window */
-    /*   window = gtk_window_new (GTK_WINDOW_TOPLEVEL);  */
-
+    // resize main window
+    gtk_window_set_default_size(GTK_WINDOW(main_window), app_prefs.window_width, app_prefs.window_height);
+    
     /* When the window is given the "delete_event" signal (this is given
      * by the window manager, usually by the "close" option, or on the
      * titlebar), we ask it to call the delete_event () function
@@ -2394,7 +2364,6 @@ int main(int argc, char *argv[])
     /* This packs the button into the window (a gtk container). */
     gnome_app_set_contents(GNOME_APP(main_window), main_vbox);
 
-
     /* setup appbar (bottom of window bar for status, menu hints and
      * progress display) */
     status_bar = gnome_appbar_new(TRUE, TRUE, GNOME_PREFERENCES_USER);
@@ -2405,7 +2374,6 @@ int main(int argc, char *argv[])
 
     /* create a new canvas */
     audio_drawing_area = gtk_drawing_area_new();
-    gtk_widget_set_size_request(GTK_WIDGET(audio_drawing_area), 600, 400);
 
     gtk_signal_connect(GTK_OBJECT(audio_drawing_area), "expose_event",
 		       (GtkSignalFunc) audio_expose_event, NULL);
@@ -2430,11 +2398,7 @@ int main(int argc, char *argv[])
 			  | GDK_POINTER_MOTION_MASK
 			  | GDK_POINTER_MOTION_HINT_MASK);
 
-    audio_view.canvas_width = 600;
-    audio_view.canvas_height = 400;
-
-    gtk_box_pack_start(GTK_BOX(main_vbox), audio_drawing_area, TRUE,
-		       TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(main_vbox), audio_drawing_area, TRUE, TRUE, 0);
 
 
     scroll_pos = gtk_adjustment_new(1.0, 0.0, 100.0, 5.0, 5.0, 0.0);
@@ -2504,27 +2468,16 @@ int main(int argc, char *argv[])
     /* and the window */
     gtk_widget_show_all(main_window);
 
-    /* and the idle function */
-    /*      gtk_idle_add(idle_func, NULL);  */
-
     /*   start_monitor("/dev/dsp") ;  */
     /*   config_audio_input(44100, 16, 1) ;  */
     /*   config_audio_input(prefs.rate, prefs.bits, prefs.stereo) ;  */
 
-    /* All GTK applications must have a gtk_main(). Control ends here
-     * and waits for an event to occur (like a key press or
-     * mouse event). */
-
     push_status_text("Ready");
-
-    signal(SIGSEGV, gwc_signal_handler);
-    signal(SIGBUS, gwc_signal_handler);
 
     {
 	char buf[100];
 	int v1, v2, v3, i;
 	sf_command(NULL, SFC_GET_LIB_VERSION, buf, sizeof(buf));
-    /*  	printf("sfversion: %s \n", buf) ;  */
 	for (i = 0; i < strlen(buf); i++) {
 	    if (buf[i] == '-') {
 		i++;
@@ -2546,6 +2499,10 @@ int main(int argc, char *argv[])
 	strcpy(wave_filename, argv[1]);
 	open_wave_filename();
     }
+    
+    /* All GTK applications must have a gtk_main(). Control ends here
+     * and waits for an event to occur (like a key press or
+     * mouse event). */
 
     gtk_main();
 

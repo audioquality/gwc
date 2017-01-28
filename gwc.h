@@ -94,6 +94,10 @@
 #define MARKER_RESET_VALUE -1000000000	/* (large negative long) markers to be completely
 					    off the screen when they are reset */
 
+struct common_prefs {
+    int window_width;
+    int window_height;
+};
 
 struct sound_prefs {
     int playback_bits ;
