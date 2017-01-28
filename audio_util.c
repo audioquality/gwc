@@ -45,7 +45,6 @@ int BYTESPERSAMPLE = 2 ;
 int MAXSAMPLEVALUE = 1 ;
 int PLAYBACK_FRAMESIZE = 4 ;
 int FRAMESIZE = 4 ;
-int current_ogg_bitstream = 0 ;
 int nonzero_seek;
 long zeros_needed;
 /*  int dump_sample = 0 ;  */
@@ -72,9 +71,9 @@ unsigned long BUFSIZE ;
 unsigned char audio_buffer[MAXBUFSIZE] ;
 unsigned char audio_buffer2[MAXBUFSIZE] ;
 
+extern long playback_startplay_position;
 long playback_start_position;
 long playback_end_position;
-long playback_startplay_position;
 long playback_samples_total = 0 ;
 long playback_samples_remaining = 0;
 long playback_bytes_per_block ;

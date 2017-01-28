@@ -268,12 +268,21 @@ void draw_compressed_audio_image(struct view *v, struct sound_prefs *p, GtkWidge
 
 
 extern struct view audio_view ;
+extern int audio_playback;
+extern long playback_startplay_position;
 
 int audio_area_button_event(GtkWidget *c, GdkEventButton *event, gpointer data)
 {
     /* we ignore all events except for BUTTON_PRESS */
-
-    if(event->type == GDK_BUTTON_PRESS) {
+    if (event->type == GDK_BUTTON_PRESS  &&  event->button == 3) {
+      /* single click with the right mouse button */
+      if (audio_playback == FALSE) {
+	// set playback position
+	playback_startplay_position = pixel_to_sample(&audio_view, (int)event->x);
+	audio_view.cursor_position = playback_startplay_position;
+	main_redraw(TRUE, TRUE);
+      }
+    } else if (event->type == GDK_BUTTON_PRESS  &&  event->button == 1) {
 	first_pick_x = last_pick_x = (int)event->x ;
 	selecting_region = TRUE ;
 	d_print("press mx:%d my:%d\n", (int)event->x, (int)event->y) ;
@@ -287,9 +296,7 @@ int audio_area_button_event(GtkWidget *c, GdkEventButton *event, gpointer data)
 	main_redraw(FALSE, FALSE) ;
 	display_times() ;
 	return TRUE;
-    }
-
-    if(event->type == GDK_BUTTON_RELEASE) {
+    } else if (event->type == GDK_BUTTON_RELEASE) {
 	region_select_min_x = MIN(first_pick_x, last_pick_x) ;
 	region_select_max_x = MAX(first_pick_x, last_pick_x) ;
 	region_select_min_x = MAX(region_select_min_x, 0) ;

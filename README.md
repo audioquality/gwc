@@ -27,6 +27,7 @@ Original Authors Homepage: [http://gwc.sourceforge.net]()
     * continue playback from the last stop, if it's visible or within the selection
     * if no audio is selected and the last stop is outside of the view, playback starts at the beginning of current view
     * try to autoscroll, if not zoomed in too much
+    * set playback position with rightclick
   * if only one channel is selected, its played to both L and R outputs - helps to identify single channel clicks
   * many new keyboard shortcuts
   * remember window size between restarts
@@ -87,6 +88,11 @@ run:
 |Amplify sonogram            |**B**|
 |Attenuate sonogram          |**V**|
 
+###Mouse functions
+
+  * **Left click**: Select audio section
+  * **Right Click** (while playback is stopped): Set playback position
+  * scrolling is currently not implemented, use keyboard arrows vor navigation
 
 ###Menu
 

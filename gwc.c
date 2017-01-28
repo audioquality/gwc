@@ -150,6 +150,8 @@ long song_markers[MAX_MARKERS];
 gint file_is_open = FALSE;
 gint file_processing = FALSE;
 long playback_samples_per_block = 0;
+long playback_startplay_position;
+
 int count = 0;
 
 void d_print(char *fmt, ...)
