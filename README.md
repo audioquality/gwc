@@ -1,12 +1,11 @@
 #Gnome Wave Cleaner
 
+Denoise & Declick audio. Clean up the sound from digitalized vinyl recordings, remove common distortion while preserving all the musical information.
 
-
----
 ##About
-The latest version from the original author Jeff Welty is [v0.21.19 released in 2013-04-05](https://sourceforge.net/projects/gwc/). While the author responds to open tickets, there is no recent development activity since 2013. This is fork is based on the original code with debian repository fixes.
+The latest version from the original author Jeff Welty is [0.21.19 released in 2013-04-05](https://sourceforge.net/projects/gwc/). While the author responds to open tickets, there is no development activity since 2013. This is fork is based on the original code with debian repository fixes.
 
-Original Authors Homepage: [http://gwc.sourceforge.net]()
+Original old-GWC Homepage: [http://gwc.sourceforge.net]()
 
 ##Changes
 
@@ -21,19 +20,19 @@ Original Authors Homepage: [http://gwc.sourceforge.net]()
   * very few keyboard shortcuts
   * same small window size after start
 
-**New (this github master) version** main feature differences compared to the original:
+**New in this (github master) version**:
 
   * new playback position behaviour: 
     * continue playback from the last stop, if it's visible or within the selection
     * if no audio is selected and the last stop is outside of the view, playback starts at the beginning of current view
     * try to autoscroll, if not zoomed in too much
     * set playback position with rightclick
-  * if only one channel is selected, its played to both L and R outputs - helps to identify single channel clicks
+  * if only one channel is selected, it is played to both L and R outputs - helps to identify single channel clicks
   * many new keyboard shortcuts
   * remember window size between restarts
   * attempt at cleaning the code, removed compilation warnings
-  * removed the ledbar. the way it was implemented, it was more confusing than useful
-  * removed lossy compression support - working with lossy audio is a bad practice. If you need to export/convert/work with different formats, use dedicated tools:
+  * removed the ledbar, the way it was implemented it was more confusing than useful
+  * removed lossy compression support - working with lossy audio is bad practice here. If you need to export/convert/work with different formats, use dedicated tools:
     - Audio Editor: [Audacity](http://www.audacityteam.org)
     - Metadata Editor: [EasyTAG](https://wiki.gnome.org/Apps/EasyTAG) or [Kid3](https://kid3.sourceforge.io)
     - Format Converter: [Sound Converter](http://soundconverter.org)
@@ -73,8 +72,8 @@ run:
 |Edit -> Estimate signal     |**K**|
 |Deselect All                |**Esc**|
 |View -> Select All          |**Num \***|
-|View -> Zoom In             |**Num +**, **Up**|
-|View -> Zoom Out            |**Num -**, **Down**|
+|View -> Zoom In             |**Up** , **Num +**|
+|View -> Zoom Out            |**Down** , **Num -**|
 |View -> Zoom to All         |**\\**|
 |View -> Zoom to Selected    |**/**|
 |Markers -> Toggle beginning marker|**N**|
@@ -96,7 +95,7 @@ run:
 
   * **Left click**: Select audio section
   * **Right Click** (while playback is stopped): Set playback position
-  * scrolling is currently not implemented, use keyboard arrows vor navigation
+  * scrolling is currently not implemented, use keyboard arrows for navigation
 
 ###Menu
 
