@@ -96,7 +96,7 @@ The menu icons for GTK2 apps are missing by default. You can enable them by:
 |Edit -> Denoise             |**J**|
 |Edit -> Estimate signal     |**K**|
 |Deselect All                |**Esc**|
-|View -> Select All          |**Num * **|
+|View -> Select All          |__Num *__|
 |View -> Zoom In             |**Up** , **Num +**|
 |View -> Zoom Out            |**Down** , **Num -**|
 |View -> Zoom to All         |**\\**|
