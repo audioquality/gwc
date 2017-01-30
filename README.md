@@ -64,11 +64,11 @@ Compile & Install:
     make
     make install
 
-To run, execute in the terminal:
+Run:
 
     gnome_wave_cleaner
 
-If the menu icons are missing, run:
+The menu icons for GTK2 apps are missing by default. You can enable them by:
 
     gconftool-2 --type bool --set /desktop/gnome/interface/menus_have_icons true
 
@@ -96,7 +96,7 @@ If the menu icons are missing, run:
 |Edit -> Denoise             |**J**|
 |Edit -> Estimate signal     |**K**|
 |Deselect All                |**Esc**|
-|View -> Select All          |**Num \***|
+|View -> Select All          |**Num ***|
 |View -> Zoom In             |**Up** , **Num +**|
 |View -> Zoom Out            |**Down** , **Num -**|
 |View -> Zoom to All         |**\\**|
