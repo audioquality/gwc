@@ -1,51 +1,76 @@
 #Gnome Wave Cleaner
 
-Denoise & Declick audio. Clean up the sound from digitalized vinyl recordings, remove common distortion while preserving all the musical information.
+![](doc/gwc.png)
+
+Denoise & Declick audio. Clean up the sound from digitalized vinyl and tape recordings, remove common distortion while preserving the musical information.
 
 ##About
-The latest version from the original author Jeff Welty is [0.21.19 released in 2013-04-05](https://sourceforge.net/projects/gwc/). While the author responds to open tickets, there is no development activity since 2013. This is fork is based on the original code with debian repository fixes.
 
-Original old-GWC Homepage: [http://gwc.sourceforge.net]()
+Original GWC Homepage: [http://gwc.sourceforge.net]()
+
+The GWC was started in 2002 by Jeff Welty. The latest original version is [0.21.19 released in 2013-04-05](https://sourceforge.net/projects/gwc). The author responds to open tickets on sourceforge, but there was no significant development activity for a decade. Most of the used GTK2 API is marked as deprecated. This fork is based on the GWC 0.21.19 code with Debian repository fixes included.
+
+The original GWC attempts to do everything: audio recording, tag editing, format conversion, CD-R exports... so a lot of development time was wasted on non-essential features. Today, there are many new programs doing it all better, but the GWC still has the best code for cleaning vinyl audio.
+
+This fork throws the non-essential features overboard and improves the usability instead. I changed what I was missing while cleaning more than 70 albums:
 
 ##Changes
 
-**The old version** 0.21.19 has some interface issues that have been adressed:
 
-  * playback position behaviour - this simplistic impementation made it very hard to identify/clean clicks by ear:
-    - if audio was selected, playback always started at the beginning of selection
-    - if no audio was selected, playback started at the beginning of the whole track
+**The old version 0.21.19** had some interface issues that have been addressed:
+
+  * playback position behavior - this simplistic impementation made it very hard to identify/clean clicks by ear:
+    - if audio was selected, playback always started at the beginning of a selection
+    - if no audio was selected, playback started at the beginning of the file (!?)
     - no playback autoscroll
     - scrolling possible only by dragging the scrollbar
   * stereo playback, even if single channel was selected - this made it hard to identify clicks present only in a single channel
   * very few keyboard shortcuts
-  * same small window size after start
+  * forgets the window size between restarts
 
-**New in this (github master) version**:
+**New in this (master branch) version**:
 
-  * new playback position behaviour: 
+  * new playback position behavior: 
     * continue playback from the last stop, if it's visible or within the selection
     * if no audio is selected and the last stop is outside of the view, playback starts at the beginning of current view
     * try to autoscroll, if not zoomed in too much
-    * set playback position with rightclick
-  * if only one channel is selected, it is played to both L and R outputs - helps to identify single channel clicks
+    * set the playback position with mouse-rightclick
+  * if only one channel is selected, it is played to both L and R outputs - helps to identify single channel distortions
   * many new keyboard shortcuts
   * remember window size between restarts
-  * attempt at cleaning the code, removed compilation warnings
-  * removed the ledbar, the way it was implemented it was more confusing than useful
-  * removed lossy compression support - working with lossy audio is bad practice here. If you need to export/convert/work with different formats, use dedicated tools:
-    - Audio Editor: [Audacity](http://www.audacityteam.org)
-    - Metadata Editor: [EasyTAG](https://wiki.gnome.org/Apps/EasyTAG) or [Kid3](https://kid3.sourceforge.io)
-    - Format Converter: [Sound Converter](http://soundconverter.org)
+  * cleaned code, no compilation warnings
+  * Removed clutter non-essential features:
+    * ledbar - the way it was implemented it was more confusing than useful
+    * batch execution - this was a bad idea, always creating inferior output
+    * cdrdao export - if you really need to burn an audio CD, see [Brasero](https://wiki.gnome.org/Apps/Brasero)
+    * lossy compression support - if you really need to export or edit different formats, use dedicated tools:
+      - Audio Editor: [Audacity](http://www.audacityteam.org)
+      - Metadata Editor: [EasyTAG](https://wiki.gnome.org/Apps/EasyTAG) or [Kid3](https://kid3.sourceforge.io)
+      - Format Converter: [Sound Converter](http://soundconverter.org)
 
+**v0.30 branch**
+
+This branch contains fixes and some improvements from the master branch, but also the non-essential burden-code, like the confusing ledbar, inferior batch functionality, and lossy compression support. Check out this branch, if you know what you are doing.
 
 ##Installation
 
-run:
+Install dependencies (Debian Linux):
+
+    apt-get install libc6-dev libgnomeui-dev libgnome2-dev libfftw3-dev libsndfile1-dev libpulse-dev
+    
+Compile & Install:
 
     ./configure
     make
     make install
 
+To run, execute in the terminal:
+
+    gnome_wave_cleaner
+
+If the menu icons are missing, run:
+
+    gconftool-2 --type bool --set /desktop/gnome/interface/menus_have_icons true
 
 
 ##Usage
@@ -54,8 +79,8 @@ run:
 
 ###Keyboard functions
 
-| Function                   | Keyboard Shortcut |
-|----------------------------|:------------------|
+| _Function_                 | _Keyboard Shortcut_ |
+|----------------------------|:--------------------|
 |Play/Stop playback          |**Space**|
 |Play selection in a loop    |**Shift + Space**, **Ctrl + Space**|
 |Go foward / backward by half revolution of 33 rpm record|**Right / Left**|
@@ -93,7 +118,7 @@ run:
 
 ###Mouse functions
 
-  * **Left click**: Select audio section
+  * **Left Click**: Select audio section
   * **Right Click** (while playback is stopped): Set playback position
   * scrolling is currently not implemented, use keyboard arrows for navigation
 
@@ -166,15 +191,18 @@ run:
 
 
 ## ToDo
-This codebase seems a little clunky from the UI perspective. Considering it is more than a decade old, it makes no sense to build more advanced features on top of this code. A good idea might be a complete GUI rewrite, while keeping the original audio restoration function base. The new GUI should make possible:
 
- * multithreading support
- * 24 bit audio support
+This codebase seems a little clunky from the UI perspective. Considering it is more than a decade old, it makes no sense to build more advanced features on top of this code. A good idea might be a complete code rewrite, while keeping the original audio restoration function base. The GWC should have:
+
+ * multithreaded audio processing
  * lossless audio import/export
  * better playback waveform visualisation
+ * 24 bit audio support
  * clipping restoration
+
+Currently the playback buffering can fail, if another CPU intensive task is running. Even during GWC waveform scrolling and main window resizing! This is very painful "buggy" behavior and cannot be changed within the current implementation :(
 
 
 ## License
 
-This code is released under the GNU GPL, see COPYING file.
+This program is released under the GNU GPL, see the COPYING file.
