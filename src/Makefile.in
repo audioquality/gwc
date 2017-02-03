@@ -1,17 +1,14 @@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 
-BINDIR = $(DESTDIR)/@bindir@
-DATADIR = $(DESTDIR)/@datadir@
-DATAROOTDIR = $(DESTDIR)/@datarootdir@
-LIBDIR = $(DESTDIR)/@libdir@
-APPNAME = gnome_wave_cleaner
-GNOME = @GNOME_BASE@
+BINDIR = @bindir@
+DATAROOTDIR = @datarootdir@
+LIBDIR = @libdir@
+APPNAME = gwc
+#GNOME = @GNOME_BASE@
 
-pixmapdir = $(DATADIR)/pixmaps
-HELPDIR = $(DESTDIR)/$(GNOME)/share/gnome/help/$(APPNAME)
-HELPDIRC = $(HELPDIR)/C
-DOCDIR = $(DATADIR)/doc/gwc
+applicationsdir = $(DATAROOTDIR)/applications
+DOCDIR = $(DATAROOTDIR)/doc/gwc
 
 # use these entries for SuSE and maybe other distros
 #DOCDIR = /usr/share/doc/packages/gwc
@@ -21,7 +18,7 @@ DOCDIR = $(DATADIR)/doc/gwc
 # Where the user preferences for gwc are stored (~user/.gnome/...)
 CONFIGDIR = /$(APPNAME)/config/
 
-DEFS = -DDATADIR=\"$(DATADIR)\" -DLIBDIR=\"$(LIBDIR)\" -DAPPNAME=\"$(APPNAME)\" @ALSADEF@ @PAHDR@ @FFTWHDR@ @FFTWPREC@
+DEFS = -DDATADIR=\"$(DATAROOTDIR)\" -DLIBDIR=\"$(LIBDIR)\" -DAPPNAME=\"$(APPNAME)\" @ALSADEF@ @PAHDR@ @FFTWHDR@ @FFTWPREC@
 CFLAGS = -D_FILE_OFFSET_BITS=64 -Wall -g -O6 @GNOMEUI_CFLAGS@ @SNDFILE_CFLAGS@
 
 LIBS= meschach.a @GNOMEUI_LIBS@ @SNDFILE_LIBS@ @ALSALIB@ @PALIB@ @FFTWLIB@ -lm
@@ -30,10 +27,8 @@ SRC = tap_reverb_file_io.c tap_reverb.c reverb.c dialog.c gwc.c audio_device.c a
 OBJS = $(SRC:.c=.o)
 
 BINFILES = gwc
-pixmap_DATA = gwc-logo.png
-DOCFILES = README INSTALL TODO COPYING Changelog
-HELPFILES = gwc_qs.html gwc.html topic.dat
-HELPFILESSRCD = doc/C
+LAUNCHER = gwc.desktop
+DOCFILES = ../README.md ../COPYING ../Changelog
 
 ###
 CC = @CC@
@@ -57,19 +52,16 @@ audio_device.o : audio_device.c audio_alsa.c audio_oss.c audio_osx.c audio_pa.c 
 install : gwc
 	install -d $(BINDIR)
 	install -d $(DOCDIR)
-	install -d $(pixmapdir)
-	install -d $(HELPDIRC)
+	install -d $(applicationsdir)
 	install -p $(BINFILES) $(BINDIR)/$(APPNAME)
 	install -p -m 0644 $(DOCFILES) $(DOCDIR)
-	for hf in $(HELPFILES) ; do install -p -m 0644 $(HELPFILESSRCD)/$$hf $(HELPDIRC) ; done
-	install -p -m 0644 $(pixmap_DATA) $(pixmapdir)
+	install -p -m 0644 $(LAUNCHER) $(applicationsdir)
 
 uninstall :
 	( cd $(BINDIR) && rm -f $(BINFILES) )
 	( cd $(DOCDIR) && rm -f $(DOCFILES) )
-	( cd $(HELPDIRC) && rm -f $(HELPFILES) )
-	( cd $(pixmapdir) && rm -f $(pixmap_DATA) )
-	( rmdir --ignore-fail-on-non-empty $(DOCDIR) $(HELPDIRC) $(HELPDIR) $(pixmapdir) )
+	( cd $(applicationsdir) && rm -f $(LAUNCHER) )
+	( rmdir --ignore-fail-on-non-empty $(DOCDIR) $(pixmapdir) )
 
 meschach.a : meschach/meschach.a
 	cp meschach/meschach.a .

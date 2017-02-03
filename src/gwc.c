@@ -509,37 +509,22 @@ int prompt_user(char *msg, char *s, int maxlen)
     return dres;
 }
 
-void show_help(const char *filename)
+void show_help(const char *uri)
 {
-    GError *err = NULL ;
-    gboolean r ;
-
-    r = gnome_help_display(filename, NULL, &err) ;
-
-    if(!r) {
-	char buf[256] ;
-	strcpy(buf, "C/") ;
-	strcat(buf, filename) ;
-
-	r = gnome_help_display(buf, NULL, &err) ;
-
-	if(!r) {
-	    fprintf(stderr, "gnome_help_display failed: %s\n", err->message) ;
-	    g_error_free(err) ;
-	}
-    }
-
-    main_redraw(FALSE, TRUE);
+    char buf[256];
+    sprintf(buf, "xdg-open %s", uri);
+    system(buf);
+    return;
 }
 
 void help(GtkWidget * widget, gpointer data)
 {
-    show_help("gwc.html") ;
+    show_help("https://github.com/clixt/gwc") ;
 }
 
 void quickstart_help(GtkWidget * widget, gpointer data)
 {
-    show_help("gwc_qs.html") ;
+    show_help("http://clixt.net/vinyl") ;
 }
 
 void declick_with_sensitivity(double sensitivity)

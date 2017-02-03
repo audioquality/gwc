@@ -2,7 +2,7 @@
 
 ![](doc/gwc.png)
 
-Denoise & Declick audio. Clean up the sound from digitalized vinyl and tape recordings, remove common distortion while preserving the musical information.
+Denoise & Declick audio files. Clean up digitalized vinyl and tape recordings, remove common distortion while preserving the musical information. The input is expected to be 16bit 44.1kHz stereo WAV file format.
 
 ##About
 
@@ -31,10 +31,10 @@ This fork throws the non-essential features overboard and improves the usability
 **New in this (master branch) version**:
 
   * new playback position behavior: 
-    * continue playback from the last stop, if it's visible or within the selection
+    * continue playback from where it stopped, if it's visible or within the selection
     * if no audio is selected and the last stop is outside of the view, playback starts at the beginning of current view
-    * try to autoscroll, if not zoomed in too much
-    * set the playback position with mouse-rightclick
+    * try to autoscroll the wave during playback, if not zoomed in too much
+    * change the playback start position with mouse-rightclick
   * if only one channel is selected, it is played to both L and R outputs - helps to identify single channel distortions
   * many new keyboard shortcuts
   * remember window size between restarts
@@ -58,17 +58,19 @@ Install dependencies (Debian Linux):
 
     apt-get install libc6-dev libgnomeui-dev libgnome2-dev libfftw3-dev libsndfile1-dev libpulse-dev
     
-Compile & Install:
+Download, Compile & Install:
 
+    git clone https://github.com/clixt/gwc
+    cd gwc/src
     ./configure
     make
     make install
 
-Run:
+Run `./gwc`, or:
 
     gnome_wave_cleaner
 
-The menu icons for GTK2 apps are missing by default. You can enable them by:
+The menu icons for GTK2 apps are missing by default, can be enabled by:
 
     gconftool-2 --type bool --set /desktop/gnome/interface/menus_have_icons true
 
@@ -125,7 +127,7 @@ The menu icons for GTK2 apps are missing by default. You can enable them by:
 ###Menu
 
   - **File**
-    - **Open** - Opens an audio file for editing.  Any file format that libsndfile supports may be edited.
+    - **Open** - Opens an audio file for editing (16bit 44.1 kHz PCM WAV)
     - **Save Selection As** - Saves the highlighted selection (or current view) as a new file
     - **Quit** - guess what!
   - **Edit**

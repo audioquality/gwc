@@ -6,6 +6,6 @@
 Makefile
 gwc
 debian/
-meschach/macheps
-meschach/maxint
+*macheps
+*maxint
 autom4te*
