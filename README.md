@@ -8,7 +8,7 @@ Denoise & Declick audio files. Clean up digitalized vinyl and tape recordings, r
 
 Original GWC Homepage: [http://gwc.sourceforge.net]()
 
-The GWC was started in 2002 by Jeff Welty. The latest original version is [0.21.19 released in 2013-04-05](https://sourceforge.net/projects/gwc). The author responds to open tickets on sourceforge, but there was no significant development activity for a decade. Most of the used GTK2 API is marked as deprecated. This fork is based on the GWC 0.21.19 code with Debian repository fixes included.
+The GWC was started in 2002 by Jeff Welty. The latest original version is [0.21.19 released in 2013-04-05](https://sourceforge.net/projects/gwc). The author responds to open tickets on sourceforge, but there was no significant development activity for a decade. Most of the used GTK2 API is marked as deprecated. This fork is based on the GWC 0.21.19 code with included Debian repository fixes.
 
 The original GWC attempts to do everything: audio recording, tag editing, format conversion, CD-R exports... so a lot of development time was wasted on non-essential features. Today, there are many new programs doing it all better, but the GWC still has the best code for cleaning vinyl audio.
 
@@ -39,7 +39,7 @@ This fork throws the non-essential features overboard and improves the usability
   * many new keyboard shortcuts
   * remember window size between restarts
   * cleaned code, no compilation warnings
-  * Removed clutter non-essential features:
+  * Removed cluttered, non-essential features:
     * ledbar - the way it was implemented it was more confusing than useful
     * batch execution - this was a bad idea, always creating inferior output
     * cdrdao export - if you really need to burn an audio CD, see [Brasero](https://wiki.gnome.org/Apps/Brasero)
@@ -54,7 +54,9 @@ This branch contains fixes and some improvements from the master branch, but als
 
 ##Installation
 
-Install dependencies (Debian Linux):
+This is a Linux application, compiled and tested on Debian Linux 9 stretch. It should compile on any other distribution, the dependencies have to be preinstalled accordingly.
+
+Install dependencies (Debian):
 
     apt-get install libc6-dev libgnomeui-dev libgnome2-dev libfftw3-dev libsndfile1-dev libpulse-dev
     
@@ -194,15 +196,15 @@ If the menu icons are missing (disabled by default for GTK2 apps), they can be e
 
 ## ToDo
 
-This codebase seems a little clunky from the UI perspective. Considering it is more than a decade old, it makes no sense to build more advanced features on top of this code. A good idea might be a complete code rewrite, while keeping the original audio restoration function base. The GWC should have:
+This codebase seems a little clunky from the UI perspective. Considering it is more than a decade old, it makes no sense to build more advanced features on top of this code. A good idea might be a complete code rewrite, while keeping the original audio restoration function base. The GWC is still missing:
 
  * multithreaded audio processing
- * lossless audio import/export
+ * lossless audio format support (FLAC)
  * better playback waveform visualisation
  * 24 bit audio support
- * clipping restoration
+ * clipping restoration function (not vinyl, but a common digital audio problem)
 
-Currently the playback buffering can fail, if another CPU intensive task is running. Even during GWC waveform scrolling and main window resizing! This is very painful "buggy" behavior and cannot be changed within the current implementation :(
+Currently the playback buffering can fail, if another CPU intensive task is running. Even during GWC waveform scrolling and main window resizing! This is very buggy behavior and cannot be changed within the current implementation :(
 
 
 ## License

@@ -245,11 +245,11 @@ long start_playback(char *output_device, struct view *v, struct sound_prefs *p, 
     if (audio_device_open(output_device) == -1) {
 	char buf[255] ;
 	#ifdef HAVE_ALSA
-	snprintf(buf, sizeof(buf), "Failed to open alsa output device %s, check Settings->Options for device information", output_device) ;
+	snprintf(buf, sizeof(buf), "Failed to open alsa output device %s, check Settings->Preferences for device information\n", output_device) ;
 	#elif HAVE_PULSE_AUDIO
-	snprintf(buf, sizeof(buf), "Failed to open Pulse audio output device, recommend internet search about pulse audio configuration for your OS") ;
+	snprintf(buf, sizeof(buf), "Failed to open Pulse audio output device, recommend internet search about pulse audio configuration for your OS\n") ;
 	#else
-	snprintf(buf, sizeof(buf), "Failed to open OSS audio output device %s, check Settings->Options for device information", output_device) ;
+	snprintf(buf, sizeof(buf), "Failed to open OSS audio output device %s, check Settings->Preferences for device information\n", output_device) ;
 	#endif
 	warning(buf) ;
 	printf(buf);

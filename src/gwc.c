@@ -2377,6 +2377,9 @@ int main(int argc, char *argv[])
 		       "button_press_event",
 		       (GtkSignalFunc) audio_area_button_event, NULL);
     gtk_signal_connect(GTK_OBJECT(audio_drawing_area),
+		       "button_release_event",
+		       (GtkSignalFunc) audio_area_button_event, NULL);
+    gtk_signal_connect(GTK_OBJECT(audio_drawing_area),
 		       "motion_notify_event",
 		       (GtkSignalFunc) audio_area_motion_event, NULL);
 /*          gtk_signal_connect (GTK_OBJECT(audio_drawing_area),"event",  */

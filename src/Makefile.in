@@ -28,7 +28,7 @@ OBJS = $(SRC:.c=.o)
 
 BINFILES = gwc
 LAUNCHER = gwc.desktop
-DOCFILES = ../README.md ../COPYING ../Changelog
+DOCFILES = ../README.md ../COPYING
 
 ###
 CC = @CC@

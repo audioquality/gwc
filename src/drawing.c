@@ -273,7 +273,7 @@ extern long playback_startplay_position;
 
 int audio_area_button_event(GtkWidget *c, GdkEventButton *event, gpointer data)
 {
-    /* we ignore all events except for BUTTON_PRESS */
+    d_print("Event-type: %ld, button: %ld\n", event->type, event->button);
     if (event->type == GDK_BUTTON_PRESS  &&  event->button == 3) {
       /* single click with the right mouse button */
       if (audio_playback == FALSE) {
@@ -296,24 +296,18 @@ int audio_area_button_event(GtkWidget *c, GdkEventButton *event, gpointer data)
 	main_redraw(FALSE, FALSE) ;
 	display_times() ;
 	return TRUE;
-    } else if (event->type == GDK_BUTTON_RELEASE) {
-	region_select_min_x = MIN(first_pick_x, last_pick_x) ;
-	region_select_max_x = MAX(first_pick_x, last_pick_x) ;
-	region_select_min_x = MAX(region_select_min_x, 0) ;
-	region_select_max_x = MIN(region_select_max_x, audio_view.canvas_width-1) ;
-	if(region_select_max_x - region_select_min_x > 0) {
-	    audio_view.selected_first_sample = pixel_to_sample(&audio_view, region_select_min_x) ;
-	    audio_view.selected_last_sample = pixel_to_sample(&audio_view, region_select_max_x) ;
-	    audio_view.selection_region = TRUE ;
-	} else {
-	    audio_view.selection_region = FALSE ;
+    } else if (event->type == GDK_BUTTON_RELEASE  &&  event->button == 1) {
+	if (audio_playback == FALSE) {
+	  // change start_playback position, if it is outside of the selection:
+	  if ((playback_startplay_position < audio_view.selected_first_sample) || 
+	      (playback_startplay_position > (audio_view.selected_last_sample - 900))) {
+	      playback_startplay_position = audio_view.selected_first_sample;
+	      audio_view.cursor_position = playback_startplay_position;
+	      main_redraw(TRUE, TRUE);
+	  }
 	}
-	selecting_region = FALSE ;
-	display_times() ;
-	main_redraw(FALSE, FALSE) ;
-	return TRUE;
     }
-
+    
     return FALSE ;
 }
 
