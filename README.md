@@ -60,17 +60,17 @@ Install dependencies (Debian Linux):
     
 Download, Compile & Install:
 
-    git clone https://github.com/clixt/gwc
+    git clone https://github.com/clixt/gwc.git
     cd gwc/src
     ./configure
     make
     make install
 
-Run `./gwc`, or:
+The desktop shortcut is _Menu->Multimedia->Gnome Wave Cleaner_ , or run in terminal:
 
-    gnome_wave_cleaner
+    gwc
 
-The menu icons for GTK2 apps are missing by default, can be enabled by:
+If the menu icons are missing (disabled by default for GTK2 apps), they can be enabled by:
 
     gconftool-2 --type bool --set /desktop/gnome/interface/menus_have_icons true
 
