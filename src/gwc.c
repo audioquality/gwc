@@ -149,7 +149,9 @@ long song_markers[MAX_MARKERS];
 
 gint file_is_open = FALSE;
 gint file_processing = FALSE;
+
 long playback_samples_per_block = 0;
+long playback_samples_total = 0;
 long playback_startplay_position;
 
 int count = 0;
@@ -906,10 +908,12 @@ void stop_all_playback_functions(GtkWidget * widget, gpointer data)
     audio_is_looping = FALSE;
     
     if (playback_timer != -1) {
+	d_print("Stopping playback timer\n");
 	gtk_timeout_remove(playback_timer);
 	playback_timer = -1 ;
     }
     if (cursor_timer != -1) {
+	d_print("Stopping cursor timer\n");
         gtk_timeout_remove(cursor_timer);    
 	cursor_timer = -1 ;
     }
@@ -947,9 +951,20 @@ gint update_cursor(gpointer data)
     if (!audio_playback)
       return 0;
     
+    // stop playback
+    if (!audio_is_looping) {
+      long processed_samples = get_processed_samples();
+      audio_debug_print("update_cursor processed samples = %lu\n", processed_samples);
+      if ((processed_samples == 0) || (processed_samples >= playback_samples_total)) {
+	  audio_debug_print("update_cursor - stopping playback\n");
+	  stop_all_playback_functions(NULL, NULL);
+	  return 0;
+      }
+    }
+    
     // find out where the playback is right now and update audio_view.cursor_position
     set_playback_cursor_position(&audio_view);
-    
+
     // autoscroll on playback, if no audio selected,
     // and not zoomed in too much
     //
@@ -971,17 +986,6 @@ gint update_cursor(gpointer data)
     } else {
       // repaint cursor
       main_redraw(TRUE, TRUE);
-    }
-
-    // stop playback
-    long first, last, playback_samples_left;
-    if (!audio_is_looping) {
-      get_region_of_interest(&first, &last, &audio_view) ;
-      playback_samples_left = last - get_playback_position();
-      if (playback_samples_left < 900) {
-	  stop_all_playback_functions(NULL, NULL);
-	  audio_debug_print("update_cursor stopped playback, playback_samples_left = %ld\n", playback_samples_left);
-      } 
     }
     
     return (TRUE);
@@ -1478,8 +1482,6 @@ gboolean  key_press_cb(GtkWidget * widget, GdkEventKey * event, gpointer data)
 	case GDK_s:
 	// select last S seconds of audio
 	    if (audio_playback == TRUE) {
-		//set_playback_cursor_position(&audio_view);
-		//gtk_timeout_remove(cursor_timer);
 		stop_all_playback_functions(widget, data);
 		audio_view.selected_last_sample = audio_view.cursor_position;
 		audio_view.selected_first_sample =

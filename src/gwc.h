@@ -273,7 +273,8 @@ int save_undo_data_insert(long first_sample, long last_sample, int status_update
 void seek_to_audio_position(long playback_position) ;
 void set_options(GtkWidget * widget, gpointer data) ;
 void set_playback_cursor_position(struct view *v) ;
-long get_playback_position() ;
+long get_processed_samples(void);
+long get_playback_position(void) ;
 void set_status_text(gchar *msg) ;
 void simple_amplify_audio(struct sound_prefs *p, long first, long last, int channel_mask, double amount) ;
 void sndfile_truncate(long total_samples) ;

@@ -72,9 +72,9 @@ unsigned char audio_buffer[MAXBUFSIZE] ;
 unsigned char audio_buffer2[MAXBUFSIZE] ;
 
 extern long playback_startplay_position;
+extern long playback_samples_total;
 long playback_start_position;
 long playback_end_position;
-long playback_samples_total = 0 ;
 long playback_samples_remaining = 0;
 long playback_bytes_per_block ;
 long looped_count = 0;
@@ -193,11 +193,18 @@ void config_audio_device(int rate_set, int bits_set, int stereo_set)
 }
 
 /*
+ * return number of processed samples since opening the audio device
+ */
+long get_processed_samples(void) {
+    return audio_device_processed_bytes() / PLAYBACK_FRAMESIZE;
+}
+
+/*
  * return playback position (current sample)
  */
-long get_playback_position() {
+long get_playback_position(void) {
   long current_position;
-  long processed_samples = audio_device_processed_bytes() / PLAYBACK_FRAMESIZE;
+  long processed_samples = get_processed_samples();
   long processed_frames = processed_samples / (2 - stereo);
   
   if (playback_startplay_position > playback_start_position) {
@@ -225,6 +232,7 @@ long get_playback_position() {
 void set_playback_cursor_position(struct view *v)
 {
     v->cursor_position = get_playback_position();
+    d_print("set_playback_cursor_position: %ld\n", v->cursor_position);
 }
 
 /*
@@ -420,25 +428,19 @@ int process_audio()
     #undef BYTESPERSAMPLE
     if(feather_out == 1) printf("\n") ;
     
-    if (audio_state == AUDIO_IS_RECORDING) {
-	len = write(wavefile_fd, audio_buffer, len) ;
-	audio_bytes_written += len ;
-    } else if (audio_state == AUDIO_IS_PLAYBACK) {
+    if (audio_state == AUDIO_IS_PLAYBACK) {
 	len = audio_device_write(p_char, len) ;
 	playback_samples_remaining -= n_read ;
 	//d_print("playback_samples_remaining: %ld\n", playback_samples_remaining);
 	if (playback_samples_remaining <= 0) {
 	    extern int audio_is_looping ;
-
 	    if (audio_is_looping) {
 	        playback_samples_remaining = playback_end_position - playback_start_position;
 		sf_seek(sndfile, playback_start_position, SEEK_SET) ;
-		zeros_needed = playback_bytes_per_block - ((playback_samples_remaining * PLAYBACK_FRAMESIZE) % playback_bytes_per_block) ;
-		if (zeros_needed < PLAYBACK_FRAMESIZE)
-		  zeros_needed = PLAYBACK_FRAMESIZE ;
 		looped_count++;
 		//g_print("process_audio loop %lu: zeros needed = %ld\n", looped_count, zeros_needed);
 	    } else {
+		// write zeros to align buffer
 		unsigned char zeros[1024];
 		memset(zeros,0,sizeof(zeros)) ;
 		do {
