@@ -617,10 +617,6 @@ int is_valid_audio_file(char *filename)
 	sf_close(sndfile) ;
 	audio_type = SNDFILE_TYPE ;
 	return 1 ;
-    } else {
-	char buf[180+PATH_MAX] ;
-	snprintf(buf, sizeof(buf), "Failed to open  %s, \'%s\'", filename, sf_strerror(NULL)) ;
-	warning(buf) ;
     }
 
     return 0 ;

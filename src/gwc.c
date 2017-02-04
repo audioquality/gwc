@@ -944,6 +944,9 @@ void gnome_flush(void)
  */
 gint update_cursor(gpointer data)
 {
+    if (!audio_playback)
+      return 0;
+    
     // find out where the playback is right now and update audio_view.cursor_position
     set_playback_cursor_position(&audio_view);
     
@@ -1138,7 +1141,7 @@ void pinknoise_cb(GtkWidget * widget, gpointer data)
 		pinknoise(&prefs, first, last,
 			      audio_view.channel_selection_mask);
 		save_sample_block_data(&prefs);
-		set_status_text("Amplify done.");
+		set_status_text("Amplify done");
 	    }
 	    main_redraw(FALSE, TRUE);
 	}
@@ -1308,7 +1311,7 @@ void split_audio_on_markers(GtkWidget * widget, gpointer data)
 
 	    if(last_sample-first_sample >= 10000) {
 		save_as_wavfile(filename, first_sample, last_sample) ;
-		printf("Save as wavfile %s %ld->%ld\n", filename, first_sample, last_sample) ;
+		d_print("Save as wavfile %s %ld->%ld\n", filename, first_sample, last_sample) ;
 		trackno++ ;
 	    }
 
@@ -1734,30 +1737,39 @@ void open_wave_filename(void)
 		main_redraw(FALSE, TRUE);
 	    } else {
 		file_is_open = FALSE;
-		warning("failed to open audio file");
 	    }
 	} else {
 	    strcpy(wave_filename, last_filename);
 	}
     } else {
 	file_is_open = FALSE;
-	warning("No file selected, or file format not recognized");
     }
 }
 
 void store_filename(GtkFileSelection * selector, gpointer user_data)
 {
-    strncpy(wave_filename,
-	   gtk_file_selection_get_filename(GTK_FILE_SELECTION
+    gchar strbuf[PATH_MAX+1];
+    strncpy(strbuf, gtk_file_selection_get_filename(GTK_FILE_SELECTION
 					   (file_selector)), PATH_MAX);
-
-    open_wave_filename();
-
+    char* ext = strrchr(strbuf, '.');
+    d_print("Selected file: %s\n", strbuf);
+    if (strcasecmp(ext, ".wav") == 0) {
+      strcpy(wave_filename, strbuf);
+      open_wave_filename();
+      if (file_is_open) {
+	  sprintf(strbuf, "File: %s", wave_filename);
+      } else {
+	  sprintf(strbuf, "Error opening file: %s", wave_filename);
+      }
+      set_status_text(strbuf);
+    } else {
+      set_status_text("File type not supported. Please open a 16bit 44.1kHz WAV file.");
     }
+}
 
-    void store_selection_filename(GtkFileSelection * selector,
-			      gpointer user_data)
-    {
+void store_selection_filename(GtkFileSelection * selector,
+			  gpointer user_data)
+{
 
     strncpy(save_selection_filename,
 	   gtk_file_selection_get_filename(GTK_FILE_SELECTION
@@ -1777,11 +1789,11 @@ void open_file_selection(GtkWidget * widget, gpointer data)
 
 	/* Create the selector */
 	file_selector =
-	    gtk_file_selection_new("Please select a file for editing.");
+	    gtk_file_selection_new("Select a WAV file:");
 
 	gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selector),
 					pathname);
-
+	
 	gtk_signal_connect(GTK_OBJECT
 			   (GTK_FILE_SELECTION(file_selector)->ok_button),
 			   "clicked", GTK_SIGNAL_FUNC(store_filename),
