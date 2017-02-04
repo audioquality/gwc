@@ -151,7 +151,6 @@ gint file_is_open = FALSE;
 gint file_processing = FALSE;
 
 long playback_samples_per_block = 0;
-long playback_samples_total = 0;
 long playback_startplay_position;
 
 int count = 0;
@@ -953,9 +952,11 @@ gint update_cursor(gpointer data)
     
     // stop playback
     if (!audio_is_looping) {
+      long first, last;
+      get_region_of_interest(&first, &last, &audio_view);
       long processed_samples = get_processed_samples();
       audio_debug_print("update_cursor processed samples = %lu\n", processed_samples);
-      if ((processed_samples == 0) || (processed_samples >= playback_samples_total)) {
+      if ((processed_samples == 0) || (processed_samples >= (last - playback_startplay_position))) {
 	  audio_debug_print("update_cursor - stopping playback\n");
 	  stop_all_playback_functions(NULL, NULL);
 	  return 0;
@@ -1198,12 +1199,13 @@ void zoom_select(GtkWidget * widget, gpointer data)
 	    audio_view.last_sample = audio_view.selected_last_sample;
 	}
 
-	if(audio_view.selected_first_sample < 0) audio_view.selected_first_sample = 0 ;
-	if(audio_view.selected_last_sample > prefs.n_samples-1) audio_view.selected_last_sample = prefs.n_samples-1 ;
+	if(audio_view.selected_first_sample < 0) 
+	  audio_view.selected_first_sample = 0;
+	if(audio_view.selected_last_sample > prefs.n_samples-1)
+	  audio_view.selected_last_sample = prefs.n_samples-1;
 
 	audio_view.selection_region = FALSE;
-	set_scroll_bar(prefs.n_samples - 1, audio_view.first_sample,
-		       audio_view.last_sample);
+	set_scroll_bar(prefs.n_samples - 1, audio_view.first_sample, audio_view.last_sample);
 	/* set_scroll_bar redraws */
 	/*main_redraw(FALSE, TRUE) ; */
 	file_processing = FALSE;
@@ -1484,12 +1486,11 @@ gboolean  key_press_cb(GtkWidget * widget, GdkEventKey * event, gpointer data)
 	    if (audio_playback == TRUE) {
 		stop_all_playback_functions(widget, data);
 		audio_view.selected_last_sample = audio_view.cursor_position;
-		audio_view.selected_first_sample =
-		    audio_view.selected_last_sample -
-		    prefs.rate * stop_key_highlight_interval;
-		if (audio_view.selected_first_sample < 0)
-		    audio_view.selected_first_sample = 0;
+		audio_view.selected_first_sample = MAX(0,
+		    (audio_view.selected_last_sample - prefs.rate * stop_key_highlight_interval));
 		audio_view.selection_region = TRUE;
+		playback_startplay_position = audio_view.selected_first_sample;
+		audio_view.cursor_position = playback_startplay_position;
 		main_redraw(FALSE, TRUE);
 	    }
 	    break;

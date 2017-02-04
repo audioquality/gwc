@@ -72,10 +72,10 @@ unsigned char audio_buffer[MAXBUFSIZE] ;
 unsigned char audio_buffer2[MAXBUFSIZE] ;
 
 extern long playback_startplay_position;
-extern long playback_samples_total;
 long playback_start_position;
 long playback_end_position;
 long playback_samples_remaining = 0;
+long playback_samples_total = 0;
 long playback_bytes_per_block ;
 long looped_count = 0;
 
@@ -460,7 +460,14 @@ void stop_playback(unsigned int force)
     //fprintf(stderr,"stop_playback() invoked, force = %u\n", force);
     
     // remember current playback position to know where to start playback next
-    playback_startplay_position = get_playback_position();
+    if (get_processed_samples() == 0) {
+      // The playback buffer is already empty. Since we cannot determine the proper playback position,
+      // just assume the playback stopped at the end of the region_of_interest:
+      long first;
+      get_region_of_interest(&first, &playback_startplay_position, &audio_view);
+    } else {
+      playback_startplay_position = get_playback_position();
+    }
     
     if (force > 0)
       force = 1;
