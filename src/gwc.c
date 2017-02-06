@@ -572,354 +572,409 @@ void declick_with_sensitivity(double sensitivity)
 
 void declick(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+	return;
 
-	file_processing = TRUE;
-
-	if(declick_detector_type == HPF_DETECT)
-	    declick_with_sensitivity(strong_declick_sensitivity);
-	else
-	    declick_with_sensitivity(strong_fft_declick_sensitivity);
-
-	file_processing = FALSE;
+    if (audio_view.selection_region == FALSE) {
+	set_status_text("Please select audio to declick first");
+	return;
     }
+
+    file_processing = TRUE;
+
+    if(declick_detector_type == HPF_DETECT)
+	declick_with_sensitivity(strong_declick_sensitivity);
+    else
+	declick_with_sensitivity(strong_fft_declick_sensitivity);
+
+    file_processing = FALSE;
 }
 
 void declick_weak(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+	return;
 
-	file_processing = TRUE;
-
-	if(declick_detector_type == HPF_DETECT)
-	    declick_with_sensitivity(weak_declick_sensitivity);
-	else
-	    declick_with_sensitivity(weak_fft_declick_sensitivity);
-
-	file_processing = FALSE;
+    if (audio_view.selection_region == FALSE) {
+	set_status_text("Please select audio to declick first");
+	return;
     }
+    
+    file_processing = TRUE;
+
+    if(declick_detector_type == HPF_DETECT)
+	declick_with_sensitivity(weak_declick_sensitivity);
+    else
+	declick_with_sensitivity(weak_fft_declick_sensitivity);
+
+    file_processing = FALSE;
+
 }
 
 void estimate(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-	long first, last;
-	file_processing = TRUE;
-	get_region_of_interest(&first, &last, &audio_view);
-	dethunk(&prefs, first, last, audio_view.channel_selection_mask);
-	main_redraw(FALSE, TRUE);
-	set_status_text("Estimate done.");
-	file_processing = FALSE;
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+	return;
+
+    if (audio_view.selection_region == FALSE) {
+	set_status_text("Please select region to estimate first");
+	return;
     }
+
+    long first, last;
+    file_processing = TRUE;
+    get_region_of_interest(&first, &last, &audio_view);
+    dethunk(&prefs, first, last, audio_view.channel_selection_mask);
+    main_redraw(FALSE, TRUE);
+    set_status_text("Estimate done");
+    file_processing = FALSE;
 }
 
 void manual_declick(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-	int doit = TRUE;
-	long first, last;
-	file_processing = TRUE;
-	get_region_of_interest(&first, &last, &audio_view);
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+	return;
 
-	if (last - first > 499) {
-	    char msg_buf[1000] ;
-	    double n = last-first+1 ;
-	    double a = 100 ;
-	    double elements = ( n + (n-a) * n * 3 + (n-a) * (n-a) * 2 + n * n ) ;
-	    double bytes = elements * sizeof(double) / (double) (1 << 20) ;
-	    char *units = "Megabytes" ;
-
-	    if(bytes > 1000) {
-		bytes /= (double) 1024 ;
-		units = "Gigabytes" ;
-	    }
-
-	    if(bytes > 1000) {
-		bytes /= (double) 1024 ;
-		units = "Terabytes" ;
-	    }
-
-	    sprintf(msg_buf, "Repairing > 500 samples may cause a crash\nYou have selected %lg samples, which will require about %8.0lf %s of memory and a long time.",
-			    n, bytes, units ) ;
-	    doit = FALSE;
-	    if (!yesno(msg_buf))
-		doit = TRUE;
-	}
-
-	if (doit == TRUE) {
-
-	    start_save_undo("Undo declick", &audio_view);
-
-	    push_status_text("Declicking selection");
-	    declick_a_click(&prefs, first, last,
-			    audio_view.channel_selection_mask);
-	    resample_audio_data(&prefs, first, last);
-	    save_sample_block_data(&prefs);
-	    pop_status_text();
-	    set_status_text("Manual declick done.");
-
-	    close_undo();
-
-	    main_redraw(FALSE, TRUE);
-	}
-
-	file_processing = FALSE;
+    if (audio_view.selection_region == FALSE) {
+	set_status_text("Please select audio to declick first");
+	return;
     }
+
+    int doit = TRUE;
+    long first, last;
+    file_processing = TRUE;
+    get_region_of_interest(&first, &last, &audio_view);
+
+    if (last - first > 499) {
+	char msg_buf[1000] ;
+	double n = last-first+1 ;
+	double a = 100 ;
+	double elements = ( n + (n-a) * n * 3 + (n-a) * (n-a) * 2 + n * n ) ;
+	double bytes = elements * sizeof(double) / (double) (1 << 20) ;
+	char *units = "Megabytes" ;
+
+	if(bytes > 1000) {
+	    bytes /= (double) 1024 ;
+	    units = "Gigabytes" ;
+	}
+
+	if(bytes > 1000) {
+	    bytes /= (double) 1024 ;
+	    units = "Terabytes" ;
+	}
+
+	sprintf(msg_buf, "Repairing > 500 samples may cause a crash\nYou have selected %lg samples, which will require about %8.0lf %s of memory and a long time.",
+			n, bytes, units ) ;
+	doit = FALSE;
+	if (!yesno(msg_buf))
+	    doit = TRUE;
+    }
+
+    if (doit == TRUE) {
+
+	start_save_undo("Undo declick", &audio_view);
+
+	push_status_text("Declicking selection");
+	declick_a_click(&prefs, first, last,
+			audio_view.channel_selection_mask);
+	resample_audio_data(&prefs, first, last);
+	save_sample_block_data(&prefs);
+	pop_status_text();
+	set_status_text("Manual declick done");
+
+	close_undo();
+
+	main_redraw(FALSE, TRUE);
+    }
+
+    file_processing = FALSE;
+
 }
 
 void decrackle(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-	int cancel;
-	long first, last;
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+	return;
 
-	file_processing = TRUE;
-	push_status_text("Saving undo information");
-
-	start_save_undo("Undo decrackle", &audio_view);
-	get_region_of_interest(&first, &last, &audio_view);
-	cancel = save_undo_data(first, last, &prefs, TRUE);
-
-	close_undo();
-
-	pop_status_text();
-
-	if (cancel != 1) {
-	    push_status_text("Decrackling selection");
-	    do_decrackle(&prefs, first, last,
-			 audio_view.channel_selection_mask,
-			 decrackle_level, decrackle_window,
-			 decrackle_average);
-	    resample_audio_data(&prefs, first, last);
-	    save_sample_block_data(&prefs);
-	    pop_status_text();
-	    set_status_text("Decrackle done.");
-	}
-
-	main_redraw(FALSE, TRUE);
-	file_processing = FALSE;
+    if (audio_view.selection_region == FALSE) {
+	set_status_text("Please select audio to decrackle first");
+	return;
     }
+
+    int cancel;
+    long first, last;
+
+    file_processing = TRUE;
+    push_status_text("Saving undo information");
+
+    start_save_undo("Undo decrackle", &audio_view);
+    get_region_of_interest(&first, &last, &audio_view);
+    cancel = save_undo_data(first, last, &prefs, TRUE);
+
+    close_undo();
+
+    pop_status_text();
+
+    if (cancel != 1) {
+	push_status_text("Decrackling selection");
+	do_decrackle(&prefs, first, last,
+		     audio_view.channel_selection_mask,
+		     decrackle_level, decrackle_window,
+		     decrackle_average);
+	resample_audio_data(&prefs, first, last);
+	save_sample_block_data(&prefs);
+	pop_status_text();
+	set_status_text("Decrackle done");
+    }
+
+    main_redraw(FALSE, TRUE);
+    file_processing = FALSE;
 }
 
 void noise_sample(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-	if (audio_view.selection_region == TRUE) {
-	  file_processing = TRUE;
-	  get_region_of_interest(&denoise_data.noise_start, &denoise_data.noise_end, &audio_view);
-	  denoise_data.ready = TRUE;
-	  load_denoise_preferences() ;
-	  //print_noise_sample(&prefs, &denoise_prefs, denoise_data.noise_start, denoise_data.noise_end) ;
-	  file_processing = FALSE;
-	  set_status_text("Noise sample taken");
-	} else {
-	  set_status_text("First you have to select a portion of the audio with pure noise");
-	}
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+	return;
+
+    if (audio_view.selection_region == TRUE) {
+      file_processing = TRUE;
+      get_region_of_interest(&denoise_data.noise_start, &denoise_data.noise_end, &audio_view);
+      denoise_data.ready = TRUE;
+      load_denoise_preferences() ;
+      //print_noise_sample(&prefs, &denoise_prefs, denoise_data.noise_start, denoise_data.noise_end) ;
+      file_processing = FALSE;
+      set_status_text("Noise sample taken");
+    } else {
+      set_status_text("First you have to select a portion of the audio with pure noise");
     }
 }
 
 void remove_noise(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-	file_processing = TRUE;
-	if (denoise_data.ready == FALSE) {
-	    warning("Please select the noise sample first");
-	} else {
-	    get_region_of_interest(&denoise_data.denoise_start,
-				   &denoise_data.denoise_end, &audio_view);
-	    load_denoise_preferences();
-	    print_denoise("remove_noise", &denoise_prefs);
-	    {
-		int cancel;
-
-		if (denoise_prefs.FFT_SIZE >
-		    (denoise_data.noise_end - denoise_data.noise_start +
-		     1)) {
-		    warning
-			("FFT_SIZE must be <= # samples in noise sample!");
-		    main_redraw(FALSE, TRUE);
-		    file_processing = FALSE ;
-		    return;
-		}
-
-		push_status_text("Saving undo information");
-
-		start_save_undo("Undo denoise", &audio_view);
-		cancel =
-		    save_undo_data(denoise_data.denoise_start,
-				   denoise_data.denoise_end, &prefs, TRUE);
-		close_undo();
-
-		pop_status_text();
-
-		if (cancel != 1) {
-		    push_status_text("Denoising selection");
-		    denoise(&prefs, &denoise_prefs,
-			    denoise_data.noise_start,
-			    denoise_data.noise_end,
-			    denoise_data.denoise_start,
-			    denoise_data.denoise_end,
-			    audio_view.channel_selection_mask);
-		    resample_audio_data(&prefs, denoise_data.denoise_start,
-					denoise_data.denoise_end);
-		    save_sample_block_data(&prefs);
-		    pop_status_text();
-		}
-		set_status_text("Denoise done.");
-
-		main_redraw(FALSE, TRUE);
-	    }
-	}
-	file_processing = FALSE;
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+	return;
+    
+    if (denoise_data.ready == FALSE) {
+	set_status_text("Please select the noise sample first");
+	return;
     }
+
+    file_processing = TRUE;
+
+    get_region_of_interest(&denoise_data.denoise_start,
+			   &denoise_data.denoise_end, &audio_view);
+    load_denoise_preferences();
+    print_denoise("remove_noise", &denoise_prefs);
+    {
+	int cancel;
+
+	if (denoise_prefs.FFT_SIZE >
+	    (denoise_data.noise_end - denoise_data.noise_start +
+	     1)) {
+	    warning
+		("FFT_SIZE must be <= # samples in noise sample!");
+	    main_redraw(FALSE, TRUE);
+	    file_processing = FALSE ;
+	    return;
+	}
+
+	push_status_text("Saving undo information");
+
+	start_save_undo("Undo denoise", &audio_view);
+	cancel =
+	    save_undo_data(denoise_data.denoise_start,
+			   denoise_data.denoise_end, &prefs, TRUE);
+	close_undo();
+
+	pop_status_text();
+
+	if (cancel != 1) {
+	    push_status_text("Denoising selection...");
+	    denoise(&prefs, &denoise_prefs,
+		    denoise_data.noise_start,
+		    denoise_data.noise_end,
+		    denoise_data.denoise_start,
+		    denoise_data.denoise_end,
+		    audio_view.channel_selection_mask);
+	    resample_audio_data(&prefs, denoise_data.denoise_start,
+				denoise_data.denoise_end);
+	    save_sample_block_data(&prefs);
+	    pop_status_text();
+	    set_status_text("Denoise done");
+	}
+	
+
+	main_redraw(FALSE, TRUE);
+    }
+
+    file_processing = FALSE;
 }
 
 void undo_callback(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-	file_processing = TRUE;
-	undo(&audio_view, &prefs);
-	main_redraw(FALSE, TRUE);
-	file_processing = FALSE;
-    } else {
-	if (file_is_open == FALSE) {
-	    warning("Nothing to Undo Yet.");
-	} else
-	    warning("Please try Undo when processing or Audio Playback has stopped");
+    if (file_is_open == FALSE) {
+	set_status_text("Nothing to Undo");
+	return;
     }
+    if (audio_playback == TRUE) {
+	set_status_text("Please try Undo when Audio Playback has stopped");
+	return;
+    }
+    if (file_processing == TRUE)
+	return;
+  
+    file_processing = TRUE;
+    undo(&audio_view, &prefs);
+    main_redraw(FALSE, TRUE);
+    file_processing = FALSE;
+    
 }
 
 
 void scale_up_callback(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-	file_processing = TRUE;
-	view_scale *= 1.25;
-	main_redraw(FALSE, TRUE);
-	file_processing = FALSE;
-    }
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+	return;
+
+    file_processing = TRUE;
+    view_scale *= 1.25;
+    main_redraw(FALSE, TRUE);
+    file_processing = FALSE;
 }
 
 void cut_callback(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-        if (is_region_selected()) {
-            long first, last;
-            get_region_of_interest(&first, &last, &audio_view);
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+      return;
 
-            if (first == 0 && last == prefs.n_samples - 1) {
-                info("Can't cut ALL audio data from file.");
-            } else {
-                file_processing = TRUE;
-                audioedit_cut_selection(&audio_view);
-                main_redraw(FALSE, TRUE);
-                file_processing = FALSE;
-            }
-        }
+    if (!is_region_selected())
+      return;
+      
+    long first, last;
+    get_region_of_interest(&first, &last, &audio_view);
+
+    if (first == 0 && last == prefs.n_samples - 1) {
+	info("Can't cut ALL audio data from file.");
+    } else {
+	file_processing = TRUE;
+	audioedit_cut_selection(&audio_view);
+	main_redraw(FALSE, TRUE);
+	file_processing = FALSE;
     }
+
 }
 
 void copy_callback(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-        if (is_region_selected()) {
-            file_processing = TRUE;
-            audioedit_copy_selection(&audio_view);
-            file_processing = FALSE;
-        }
-    }
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+      return;
+      
+    if (!is_region_selected())
+      return;
+
+    file_processing = TRUE;
+    audioedit_copy_selection(&audio_view);
+    file_processing = FALSE;
 }
 
 void paste_callback(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-        if (is_region_selected()) {
-            if (audioedit_has_clipdata()) {
-                file_processing = TRUE;
-                audioedit_paste_selection(&audio_view);
-                main_redraw(FALSE, TRUE);
-                file_processing = FALSE;
-            } else {
-                info("No audio data in internal clipboard.");
-            }
-        }
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+      return;
+      
+    if (!is_region_selected())
+      return;
+
+    if (audioedit_has_clipdata()) {
+	file_processing = TRUE;
+	audioedit_paste_selection(&audio_view);
+	main_redraw(FALSE, TRUE);
+	file_processing = FALSE;
+    } else {
+	info("No audio data in internal clipboard.");
     }
 }
 
 void delete_callback(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-        if (is_region_selected()) {
-            long first, last;
-            get_region_of_interest(&first, &last, &audio_view);
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+      return;
+      
+    if (!is_region_selected())
+      return;
+  
+    long first, last;
+    get_region_of_interest(&first, &last, &audio_view);
 
-            if (first == 0 && last == prefs.n_samples - 1) {
-                info("Can't delete ALL audio data from file.");
-            } else {
-                file_processing = TRUE;
-                audioedit_delete_selection(&audio_view);
-                main_redraw(FALSE, TRUE);
-                file_processing = FALSE;
-            }
-        }
+    if (first == 0 && last == prefs.n_samples - 1) {
+	info("Can't delete ALL audio data from file.");
+    } else {
+	file_processing = TRUE;
+	audioedit_delete_selection(&audio_view);
+	main_redraw(FALSE, TRUE);
+	file_processing = FALSE;
     }
 }
 
 void silence_callback(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-        if (is_region_selected()) {
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+      return;
+      
+    if (!is_region_selected())
+      return;
 
-	    if(!yesno("Insert silence can take a long time, continue?")) {
-		file_processing = TRUE;
-		audioedit_insert_silence(&audio_view);
-		main_redraw(FALSE, TRUE);
-		file_processing = FALSE;
-	    }
-        }
+    if(!yesno("Insert silence can take a long time, continue?")) {
+	file_processing = TRUE;
+	audioedit_insert_silence(&audio_view);
+	main_redraw(FALSE, TRUE);
+	file_processing = FALSE;
     }
 }
 
 void scale_reset_callback(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-	file_processing = TRUE;
-	view_scale = 1.00;
-	spectral_amp = 1.00;
-	main_redraw(FALSE, TRUE);
-	file_processing = FALSE;
-    }
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+      return;
+
+    file_processing = TRUE;
+    view_scale = 1.00;
+    spectral_amp = 1.00;
+    main_redraw(FALSE, TRUE);
+    file_processing = FALSE;
 }
 
 void scale_down_callback(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
-	file_processing = TRUE;
-	view_scale /= 1.25;
-	main_redraw(FALSE, TRUE);
-	file_processing = FALSE;
-    }
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+      return;
+  
+    file_processing = TRUE;
+    view_scale /= 1.25;
+    main_redraw(FALSE, TRUE);
+    file_processing = FALSE;
 }
 
 void stop_all_playback_functions(GtkWidget * widget, gpointer data)
 {
-    audio_playback = FALSE;
-    audio_is_looping = FALSE;
-    
     if (playback_timer != -1) {
-	d_print("Stopping playback timer\n");
 	gtk_timeout_remove(playback_timer);
 	playback_timer = -1 ;
     }
     if (cursor_timer != -1) {
-	d_print("Stopping cursor timer\n");
         gtk_timeout_remove(cursor_timer);    
 	cursor_timer = -1 ;
     }
     stop_playback(0);
+    
+    audio_playback = FALSE;
+    audio_is_looping = FALSE;
 
+    audio_view.cursor_position = playback_startplay_position;
+    
     // show current playback position, if outside of the view
-    if (audio_view.cursor_position > audio_view.last_sample) {
+    if ((audio_view.cursor_position > audio_view.last_sample) ||
+	(audio_view.cursor_position < audio_view.first_sample)) {
 	long view_size_half = (audio_view.last_sample - audio_view.first_sample) >> 1;
 	audio_view.first_sample = audio_view.cursor_position - view_size_half;
 	audio_view.last_sample = audio_view.cursor_position + view_size_half;
@@ -957,8 +1012,9 @@ gint update_cursor(gpointer data)
       long processed_samples = get_processed_samples();
       audio_debug_print("update_cursor processed samples = %lu\n", processed_samples);
       if ((processed_samples == 0) || (processed_samples >= (last - playback_startplay_position))) {
-	  audio_debug_print("update_cursor - stopping playback\n");
 	  stop_all_playback_functions(NULL, NULL);
+	  // repaint cursor
+	  main_redraw(TRUE, TRUE);
 	  return 0;
       }
     }
@@ -1020,38 +1076,35 @@ void start_gwc_playback(GtkWidget * widget, gpointer data)
 
     //audio_debug_print("entering start_gwc_playback with audio_playback = %d\n", audio_playback) ;
 
-    if (file_is_open == TRUE && file_processing == FALSE && audio_playback == FALSE) {
-	audio_debug_print("\nplayback device: %s\n", audio_device) ;  
-	
-	playback_samples_per_block = start_playback(audio_device, &audio_view, &prefs, 0.1, 2);
-	audio_debug_print("playback_samples_per_block = %ld\n", playback_samples_per_block) ;
-	
-	if (playback_samples_per_block < 1)
-	    return ; // an error occured
-
-	//prefs.rate = 44100
-	millisec_per_block = playback_samples_per_block * 1000 / prefs.rate;
-	playback_millisec = millisec_per_block / 4;
-	    
-	cursor_samples_per_pixel = (audio_view.last_sample - audio_view.first_sample) / audio_view.canvas_width;
-	cursor_millisec = (cursor_samples_per_pixel * 1000) / prefs.rate;
-	/* lower limit of 1/100th second on screen redraws */
-	if (cursor_millisec < 20)
-	    cursor_millisec = 19;
-	    
-	audio_playback = TRUE;
-	audio_debug_print("play_a_block timer: %ld ms\n", playback_millisec);
-	audio_debug_print("update_cursor timer: %ld ms\n", cursor_millisec);
-	audio_debug_print("cursor_samples_per_pixel: %ld\n", cursor_samples_per_pixel);
-	playback_timer = gtk_timeout_add(playback_millisec, play_a_block, NULL);
-	cursor_timer = gtk_timeout_add(cursor_millisec, update_cursor, NULL);
-
-	//play_a_block(NULL);
-	//update_cursor(NULL);
-    }
-
-    audio_debug_print("leaving start_gwc_playback with audio_playback=%d\n", audio_playback);
+    if (file_is_open == FALSE || file_processing == TRUE || audio_playback == TRUE)
+      return;
+      
+    audio_debug_print("\nplayback device: %s\n", audio_device) ;  
     
+    playback_samples_per_block = start_playback(audio_device, &audio_view, &prefs, 0.1, 2);
+    audio_debug_print("playback_samples_per_block = %ld\n", playback_samples_per_block) ;
+    
+    if (playback_samples_per_block < 1)
+	return ; // an error occured
+
+    //prefs.rate = 44100
+    millisec_per_block = playback_samples_per_block * 1000 / prefs.rate;
+    playback_millisec = millisec_per_block / 4;
+	
+    cursor_samples_per_pixel = (audio_view.last_sample - audio_view.first_sample) / audio_view.canvas_width;
+    cursor_millisec = (cursor_samples_per_pixel * 1000) / prefs.rate;
+    /* lower limit of 1/100th second on screen redraws */
+    if (cursor_millisec < 20)
+	cursor_millisec = 19;
+	
+    audio_playback = TRUE;
+    audio_debug_print("play_a_block timer: %ld ms\n", playback_millisec);
+    audio_debug_print("update_cursor timer: %ld ms\n", cursor_millisec);
+    audio_debug_print("cursor_samples_per_pixel: %ld\n", cursor_samples_per_pixel);
+    play_a_block(NULL);
+    playback_timer = gtk_timeout_add(playback_millisec, play_a_block, NULL);
+    cursor_timer = gtk_timeout_add(cursor_millisec, update_cursor, NULL);
+
 }
 
 void detect_only_func(GtkWidget * widget, gpointer data)

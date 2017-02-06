@@ -43,7 +43,7 @@ void stop_timer(char *message)
     {
 	double fstart = start_time.tv_sec + (double)start_time.tv_usec/1000000.0 ;
 	double fend = end_time.tv_sec + (double)end_time.tv_usec/1000000.0 ;
-	fprintf(stderr, "%s in %7.3lf real seconds\n", message, fend-fstart) ;
+	d_print("%s in %7.3lf real seconds\n", message, fend-fstart) ;
     }
 }
 
@@ -62,7 +62,7 @@ void stop_timer(char *message)
     {
 	double fstart = start_time.time + (double)start_time.millitm/1000.0 ;
 	double fend = end_time.time + (double)end_time.millitm/1000.0 ;
-	fprintf(stderr, "%s in %7.3lf real seconds\n", message, fend-fstart) ;
+	d_print("%s in %7.3lf real seconds\n", message, fend-fstart) ;
     }
 }
 #endif

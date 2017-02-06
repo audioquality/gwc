@@ -203,23 +203,33 @@ long get_processed_samples(void) {
  * return playback position (current sample)
  */
 long get_playback_position(void) {
+  
+  extern int audio_is_looping;
   long current_position;
   long processed_samples = get_processed_samples();
-  long processed_frames = processed_samples / (2 - stereo);
+  long processed_frames = processed_samples / MAX(1, (2 - stereo));
+  d_print("get_playback_position processed_frames = %ld\n", processed_frames);
   
-  if (playback_startplay_position > playback_start_position) {
-    if ((playback_end_position - playback_startplay_position) > processed_frames) {
-      // 1st-loop run, from startplay to end
-      current_position = playback_startplay_position + processed_frames;
-    } else {
-      // consecutive loops
-      current_position = playback_start_position + (processed_frames -
-                         (playback_end_position - playback_startplay_position)) % playback_samples_total;
-    }
+  if ((playback_end_position - playback_startplay_position) >= processed_frames) {
+    // 1st-loop run, from startplay to end
+    current_position = playback_startplay_position + processed_frames;
   } else {
-    current_position = playback_start_position + processed_frames % playback_samples_total;
+    if (audio_is_looping) {
+      // consecutive loops
+      if (playback_startplay_position > playback_start_position) {
+	// we started in the middle
+	current_position = playback_start_position + (processed_frames -
+			   (playback_end_position - playback_startplay_position)) % playback_samples_total;
+      } else {
+	// we started at the beginning of the region_of_interest
+	current_position = playback_startplay_position + processed_frames % playback_samples_total;
+      }
+    } else {
+      // no looping, we processed all the frames including zeros => we are at the end!
+      current_position = playback_end_position;
+    }
   }
-  
+
   //d_print("get_playback_position: %ld, processed_samples: %ld\n", current_position, processed_samples);
   
   return current_position;
@@ -232,7 +242,7 @@ long get_playback_position(void) {
 void set_playback_cursor_position(struct view *v)
 {
     v->cursor_position = get_playback_position();
-    d_print("set_playback_cursor_position: %ld\n", v->cursor_position);
+    //d_print("set_playback_cursor_position: %ld\n", v->cursor_position);
 }
 
 /*
@@ -457,10 +467,10 @@ int process_audio()
 
 void stop_playback(unsigned int force)
 {
-    //fprintf(stderr,"stop_playback() invoked, force = %u\n", force);
     
     // remember current playback position to know where to start playback next
-    if (get_processed_samples() == 0) {
+    extern int audio_is_looping;
+    if ((get_processed_samples() == 0) && (!audio_is_looping)) {
       // The playback buffer is already empty. Since we cannot determine the proper playback position,
       // just assume the playback stopped at the end of the region_of_interest:
       long first;

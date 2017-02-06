@@ -275,12 +275,15 @@ int audio_area_button_event(GtkWidget *c, GdkEventButton *event, gpointer data)
 {
     d_print("Event-type: %ld, button: %ld\n", event->type, event->button);
     
-    // disable clicking during playback
-    if (audio_playback)
-      return 0;
-      
     if (event->type == GDK_BUTTON_PRESS  &&  event->button == 3) {
+	extern int audio_is_looping;
+	extern int audio_playback;
+	//int restart_playback = audio_playback;
+	int loop_playback = audio_is_looping;
 	// single click with the right mouse button
+	if (audio_playback)
+	  stop_all_playback_functions(NULL, NULL);
+	
 	// set playback position
 	long new_position = pixel_to_sample(&audio_view, (int)event->x);
 	long first, last;
@@ -291,7 +294,20 @@ int audio_area_button_event(GtkWidget *c, GdkEventButton *event, gpointer data)
 		audio_view.cursor_position = playback_startplay_position;
 		main_redraw(TRUE, TRUE);
 	}
-    } else if (event->type == GDK_BUTTON_PRESS  &&  event->button == 1) {
+	
+	// start playback at the new position
+	//if (restart_playback) {
+	  start_gwc_playback(NULL, NULL);
+	  audio_is_looping = loop_playback;
+	//}
+	return 0;
+    }
+    
+    // ignore other clicking actions during playback
+    if (audio_playback)
+      return 0;
+    
+    if (event->type == GDK_BUTTON_PRESS  &&  event->button == 1) {
 	first_pick_x = last_pick_x = (int)event->x ;
 	selecting_region = TRUE ;
 	d_print("press mx:%d my:%d\n", (int)event->x, (int)event->y) ;
@@ -306,13 +322,10 @@ int audio_area_button_event(GtkWidget *c, GdkEventButton *event, gpointer data)
 	display_times() ;
 	return TRUE;
     } else if (event->type == GDK_BUTTON_RELEASE  &&  event->button == 1) {
-	// change start_playback position, if it is outside of the selection:
-	if ((playback_startplay_position < audio_view.selected_first_sample) || 
-	    (playback_startplay_position > (audio_view.selected_last_sample - 900))) {
-	    playback_startplay_position = audio_view.selected_first_sample;
-	    audio_view.cursor_position = playback_startplay_position;
-	    main_redraw(TRUE, TRUE);
-	}
+	// change start_playback position
+	playback_startplay_position = audio_view.selected_first_sample;
+	audio_view.cursor_position = playback_startplay_position;
+	main_redraw(TRUE, TRUE);
     }
     
     return FALSE ;

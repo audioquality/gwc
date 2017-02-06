@@ -281,6 +281,8 @@ void sndfile_truncate(long total_samples) ;
 struct sound_prefs sound_pref_dialog(struct sound_prefs current) ;
 void stats(double x[], int n, double *pMean, double *pStderr, double *pVar, double *pCv, double *pStddev) ;
 void resample_audio_data(struct sound_prefs *p, long first, long last) ;
+void stop_all_playback_functions(GtkWidget * widget, gpointer data);
+void start_gwc_playback(GtkWidget * widget, gpointer data);
 long start_playback(char *output_device, struct view *v, struct sound_prefs *p, double seconds_per_block, double seconds_to_preload) ;
 int  start_monitor(char *input_device) ;
 void stop_playback(unsigned int force) ;
