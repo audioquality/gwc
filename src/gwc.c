@@ -350,44 +350,26 @@ void save_preferences(void)
     gnome_config_pop_prefix();
 }
 
-/*  void main_set_preferences(GtkWidget * widget, gpointer data)  */
-/*  {  */
-/*      preferences_dialog(prefs);  */
-/*  }  */
-
 void display_message(char *msg, char *title) 
 {
-    GtkWidget *dlg, *txt;
+    GtkWidget *dialog;
+    dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_INFO, GTK_BUTTONS_OK, msg);
 
-    dlg = gtk_dialog_new_with_buttons(title,
-    				      GTK_WINDOW(main_window),
-				      GTK_DIALOG_DESTROY_WITH_PARENT,
-				      GTK_STOCK_OK,
-				      GTK_RESPONSE_NONE,
-				      NULL);
-
-    txt = gtk_label_new(msg);
-
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), txt, TRUE, TRUE, 0) ;
-
-    gtk_widget_show_all(dlg) ;
-
-    gtk_dialog_run(GTK_DIALOG(dlg)) ;
-
-    gtk_widget_destroy(txt) ;
-    gtk_widget_destroy(dlg) ;
-
+    gtk_window_set_title(GTK_WINDOW(dialog), title);
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy( GTK_WIDGET(dialog) );
+    
     main_redraw(FALSE, TRUE);
 }
 
 void warning(char *msg)
 {
-    display_message(msg, "WARNING");
+    display_message(msg, "Warning");
 }
 
 void info(char *msg)
 {
-    display_message(msg, "");
+    display_message(msg, "Info");
 }
 
 int yesnocancel(char *msg)
@@ -433,36 +415,23 @@ int yesnocancel(char *msg)
 
 int yesno(char *msg)
 {
-    GtkWidget *dlg, *text;
-    int dres;
+    int ret;
+    GtkWidget *dialog;
+    dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL, GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO, msg);
 
-    dlg = gtk_dialog_new_with_buttons("Question",
-    				        GTK_WINDOW(main_window),
-				        GTK_DIALOG_DESTROY_WITH_PARENT,
-					GTK_STOCK_YES,
-					GTK_RESPONSE_YES,
-					 GTK_STOCK_NO,
-					 GTK_RESPONSE_NO,
-					 NULL);
-
-    text = gtk_label_new(msg);
-    gtk_widget_show(text);
-    gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), text, TRUE, TRUE, 0);
-
-    gtk_widget_show_all(dlg) ;
-
-    dres = gtk_dialog_run(GTK_DIALOG(dlg));
-    gtk_widget_destroy(dlg) ;
-
-    if (dres == GTK_RESPONSE_NONE || dres == GTK_RESPONSE_NO) {
-	dres = 1 ;		/* return we clicked no */
+    gtk_window_set_title(GTK_WINDOW(dialog), "GWC");
+    gint result = gtk_dialog_run(GTK_DIALOG(dialog));
+    gtk_widget_destroy( GTK_WIDGET(dialog) );
+    
+    if (result == GTK_RESPONSE_YES) {
+	ret = 0;
     } else {
-	dres = 0 ; 		/* return we clicked yes */
+	ret = 1;
     }
-
+    
     main_redraw(FALSE, TRUE);
-
-    return dres;
+    
+    return ret;
 }
 
 int prompt_user(char *msg, char *s, int maxlen)
@@ -1022,11 +991,13 @@ gint update_cursor(gpointer data)
     // find out where the playback is right now and update audio_view.cursor_position
     set_playback_cursor_position(&audio_view);
 
-    // autoscroll on playback, if no audio selected,
-    // and not zoomed in too much
+    // autoscroll on playback
+    //
+    //  NOTE:  autoscrolling is omitted if cursor_samples_per_pixel is too low (zoomed in too much),
+    //         this would cause buffering failure (audio skipping)
     //
     long cursor_samples_per_pixel = (audio_view.last_sample - audio_view.first_sample) / audio_view.canvas_width;
-    if ((audio_view.selection_region == FALSE) && (cursor_samples_per_pixel > 150) &&
+    if ((cursor_samples_per_pixel > 150) &&
       (audio_view.cursor_position > (audio_view.last_sample - 
       ((audio_view.last_sample - audio_view.first_sample) / 30)))) {
       
@@ -1525,9 +1496,10 @@ gboolean  key_press_cb(GtkWidget * widget, GdkEventKey * event, gpointer data)
 	case GDK_space:
 	// play/stop playback
 	    if (audio_playback == FALSE) {
-		start_gwc_playback(widget, data);
+		// NOTE: audio_is_looping has to be set before start_gwc_playback() call!
 		if ((event->state & GDK_CONTROL_MASK) || (event->state & GDK_SHIFT_MASK))
 		  audio_is_looping = TRUE;
+		start_gwc_playback(widget, data);
 	    } else {
 	      stop_all_playback_functions(widget, data);
 	      // repaint cursor

@@ -40,10 +40,8 @@ snd_pcm_uframes_t buffer_total_frames; /* number of frames in alsa device buffer
 
 static void snd_perr(char *text, int err)
 {
-    fprintf(stderr, "##########################################################\n");
-    fprintf(stderr, "%s\n", text);
-    fprintf(stderr, "%s\n", snd_strerror(err));
-    warning(text) ;
+    d_print("Sound Error: %s, %s\n", text, snd_strerror(err));
+    warning(text);
 }
 
 int audio_device_open(char *output_device)
@@ -51,10 +49,10 @@ int audio_device_open(char *output_device)
     int err = snd_pcm_open(&handle, output_device, /*"default",*/
                            SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
     if (err < 0) {
-        snd_perr("ALSA audio_device_open: snd_pcm_open", err);
+        d_print("ALSA audio_device_open: snd_pcm_open failed, err %i\n", err);
         return -1;
     }
-    //printf("Opened ALSA audio device: %s\n",output_device);
+    //d_print("Opened ALSA audio device: %s\n",output_device);
     
     written_frames = 0;
     drain_delta=0 ;

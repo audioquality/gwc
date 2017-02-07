@@ -275,12 +275,11 @@ int audio_area_button_event(GtkWidget *c, GdkEventButton *event, gpointer data)
 {
     d_print("Event-type: %ld, button: %ld\n", event->type, event->button);
     
+    // right button click
     if (event->type == GDK_BUTTON_PRESS  &&  event->button == 3) {
 	extern int audio_is_looping;
 	extern int audio_playback;
-	//int restart_playback = audio_playback;
 	int loop_playback = audio_is_looping;
-	// single click with the right mouse button
 	if (audio_playback)
 	  stop_all_playback_functions(NULL, NULL);
 	
@@ -288,18 +287,22 @@ int audio_area_button_event(GtkWidget *c, GdkEventButton *event, gpointer data)
 	long new_position = pixel_to_sample(&audio_view, (int)event->x);
 	long first, last;
 	get_region_of_interest(&first, &last, &audio_view);
-	// only allow to set position within the region of interest
+	
 	if ((new_position >= first) && (new_position < last)) {
 		playback_startplay_position = new_position;
+	} else if (new_position < first) {
+		playback_startplay_position = first;
+	}
+	if (new_position >= last) {
+	// we clicked behind the last selected position, leave playback stopped
+		audio_view.cursor_position = last;
+		main_redraw(TRUE, TRUE);
+	} else {
 		audio_view.cursor_position = playback_startplay_position;
 		main_redraw(TRUE, TRUE);
+		start_gwc_playback(NULL, NULL);
+		audio_is_looping = loop_playback;
 	}
-	
-	// start playback at the new position
-	//if (restart_playback) {
-	  start_gwc_playback(NULL, NULL);
-	  audio_is_looping = loop_playback;
-	//}
 	return 0;
     }
     
@@ -307,6 +310,7 @@ int audio_area_button_event(GtkWidget *c, GdkEventButton *event, gpointer data)
     if (audio_playback)
       return 0;
     
+    // left button press
     if (event->type == GDK_BUTTON_PRESS  &&  event->button == 1) {
 	first_pick_x = last_pick_x = (int)event->x ;
 	selecting_region = TRUE ;
@@ -321,8 +325,9 @@ int audio_area_button_event(GtkWidget *c, GdkEventButton *event, gpointer data)
 	main_redraw(FALSE, FALSE) ;
 	display_times() ;
 	return TRUE;
+    // left button release
     } else if (event->type == GDK_BUTTON_RELEASE  &&  event->button == 1) {
-	// change start_playback position
+	// this is a new selection => set start_playback position to the beginning of the selection
 	playback_startplay_position = audio_view.selected_first_sample;
 	audio_view.cursor_position = playback_startplay_position;
 	main_redraw(TRUE, TRUE);

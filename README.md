@@ -32,12 +32,12 @@ This fork throws the non-essential features overboard and improves the usability
 
   * new playback position behavior: 
     * continue playback from where it stopped, if it's visible or within the selection
-    * if no audio is selected and the last stop is outside of the view, playback starts at the beginning of current view
+    * if no audio is selected and the playback cursor is outside of the view, playback starts at the beginning of current view
     * try to autoscroll the wave during playback, if not zoomed in too much
-    * change the playback start position with mouse-rightclick
-  * if only one channel is selected, it is played to both L and R outputs - helps to identify single channel distortions
-  * many new keyboard shortcuts
-  * remember window size between restarts
+    * start playback at any position with mouse-rightclick
+  * if only one channel is selected, it is played to both L and R outputs to help identify single channel distortions
+  * many new keyboard shortcuts, including wave scrolling using arrows
+  * remember the main window size between restarts
   * cleaned code, no compilation warnings
   * Removed cluttered, non-essential features:
     * ledbar - the way it was implemented it was more confusing than useful
