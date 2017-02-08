@@ -1,3 +1,12 @@
+--------------------------------------------------------------------
+NOTE: This document is from the original source from Jeff Welty,
+valid for GWC version 0.21. It is kept here for historical purposes.
+For current master, v0.30 and v0.40 branches see the "Installation"
+section in README.md.
+                                               (clixt.net, 2017)
+--------------------------------------------------------------------
+
+
 Issue the command:
 
 "make install"

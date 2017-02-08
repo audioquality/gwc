@@ -1791,7 +1791,7 @@ void open_file_selection(GtkWidget * widget, gpointer data)
     gtk_file_filter_add_pattern (filter, "*.wav");    
     gtk_file_chooser_set_filter (GTK_FILE_CHOOSER (dialog), filter);
 
-    gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), dirname(pathname));
+    gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (dialog), pathname);
 
     if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
 	char *filename;
@@ -1983,22 +1983,22 @@ GnomeUIInfo marker_menu[] = {
 
 GnomeUIInfo view_menu[] = {
 
-    GNOMEUIINFO_ITEM_ACCEL(" ZoomSelect", "Zoom in on selected portion",
+    GNOMEUIINFO_ITEM_ACCEL(" Zoom Select", "Zoom in on selected portion",
 		       zoom_select, zoom_sel_xpm, GDK_KEY_slash),
 
-    GNOMEUIINFO_ITEM_ACCEL(" ZoomIn", "Zoom in", zoom_in,
+    GNOMEUIINFO_ITEM_ACCEL(" Zoom In", "Zoom in", zoom_in,
 		 zoom_in_xpm, GDK_KEY_KP_Add),
 
-    GNOMEUIINFO_ITEM_ACCEL(" ZoomOut", "Zoom out", zoom_out,
+    GNOMEUIINFO_ITEM_ACCEL(" Zoom Out", "Zoom out", zoom_out,
 		 zoom_out_xpm, GDK_KEY_KP_Subtract),
 
-    GNOMEUIINFO_ITEM_ACCEL(" ViewAll", "View Entire audio file",
+    GNOMEUIINFO_ITEM_ACCEL(" View All", "View Entire audio file",
 		 view_all, view_all_xpm, GDK_KEY_backslash),
 
-    GNOMEUIINFO_ITEM_ACCEL(" SelectAll", "Select current view",
+    GNOMEUIINFO_ITEM_ACCEL(" Select View", "Select current view",
 		 select_all, select_all_xpm, GDK_KEY_KP_Multiply),
 
-    GNOMEUIINFO_ITEM(" SpectralView", "Toggle Sonagram",
+    GNOMEUIINFO_ITEM(" Spectral View", "Toggle Sonogram",
 		 display_sonogram, spectral_xpm),
     GNOMEUIINFO_END
 };
@@ -2047,24 +2047,24 @@ GnomeUIInfo transport_toolbar_info[] = {
     GNOMEUIINFO_ITEM("Stop", "Stop audio playback",
 		 stop_all_playback_functions, stop_xpm),
 
-    GNOMEUIINFO_ITEM("ZoomSelect", "Zoom in on selected portion",
+    GNOMEUIINFO_ITEM("Zoom Select", "Zoom in on selected portion",
 		 zoom_select, zoom_sel_xpm),
 
-    GNOMEUIINFO_ITEM("ZoomIn", "Zoom in", zoom_in,
+    GNOMEUIINFO_ITEM("Zoom In", "Zoom in", zoom_in,
 		 zoom_in_xpm),
 
-    GNOMEUIINFO_ITEM("ZoomOut", "Zoom out", zoom_out,
+    GNOMEUIINFO_ITEM("Zoom Out", "Zoom out", zoom_out,
 		 zoom_out_xpm),
 
-    GNOMEUIINFO_ITEM("ViewAll", "View Entire audio file",
+    GNOMEUIINFO_ITEM("View All", "View Entire audio file",
 		 view_all,
 		 view_all_xpm),
 
-    GNOMEUIINFO_ITEM("SelectAll", "Select current view",
+    GNOMEUIINFO_ITEM("Select View", "Select current view",
 		 select_all,
 		 select_all_xpm),
 
-    GNOMEUIINFO_ITEM("SpectralView", "Toggle Sonagram",
+    GNOMEUIINFO_ITEM("Spectral View", "Toggle Sonogram",
 		 display_sonogram,
 		 spectral_xpm),
 

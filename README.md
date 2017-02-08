@@ -33,11 +33,12 @@ This fork throws the non-essential features overboard and improves the usability
   * new playback position behavior: 
     * continue playback from where it stopped, if it's visible or within the selection
     * if no audio is selected and the playback cursor is outside of the view, playback starts at the beginning of current view
-    * try to autoscroll the wave during playback, if not zoomed in too much
-    * start playback at any position with mouse-rightclick
+    * autoscroll the wave during playback (if not zoomed in too much)
+    * start playback at custom position with mouse-rightclick
   * if only one channel is selected, it is played to both L and R outputs to help identify single channel distortions
   * many new keyboard shortcuts, including wave scrolling using arrows
   * remember the main window size between restarts
+  * new open/save GTK dialogs
   * cleaned code, no compilation warnings
   * Removed cluttered, non-essential features:
     * ledbar - the way it was implemented it was more confusing than useful
@@ -50,7 +51,7 @@ This fork throws the non-essential features overboard and improves the usability
 
 **v0.30 branch**
 
-This branch contains fixes and some improvements from the master branch, but also the non-essential burden-code, like the confusing ledbar, inferior batch functionality, and lossy compression support. Check out this branch, if you know what you are doing.
+This branch contains few fixes and improvements from the master branch, but also the old non-essential code, like the confusing ledbar, inferior batch functionality, and lossy compression support. Check out this branch, if you know what you are doing.
 
 ##Installation
 
@@ -98,9 +99,9 @@ If the menu icons are missing (disabled by default for GTK2 apps), they can be e
 |Edit -> Decrackle           |**C**|
 |Edit -> Sample              |**H**|
 |Edit -> Denoise             |**J**|
-|Edit -> Estimate signal     |**K**|
+|Edit -> Estimate Signal     |**K**|
 |Deselect All                |**Esc**|
-|View -> Select All          |__Num *__|
+|View -> Select View         |__Num *__|
 |View -> Zoom In             |**Up** , **Num +**|
 |View -> Zoom Out            |**Down** , **Num -**|
 |View -> Zoom to All         |**\\**|
@@ -123,7 +124,7 @@ If the menu icons are missing (disabled by default for GTK2 apps), they can be e
 ###Mouse functions
 
   * **Left Click**: Select audio section
-  * **Right Click** (while playback is stopped): Set playback position
+  * **Right Click**: Set the playback position & start playback
   * scrolling is currently not implemented, use keyboard arrows for navigation
 
 ###Menu
@@ -151,7 +152,7 @@ If the menu icons are missing (disabled by default for GTK2 apps), they can be e
     - **Zoom In** - Zoom in by a factor of 1.5. The audio stays centered in the window
     - **Zoom Out** - Zoom out by a factor of 1.5. The audio stays centered in the window
     - **View All** - Display the entire audio file in the window
-    - **Select All** - Highlights the entire window
+    - **Select View** - Select current view. To select the whole audio file, do _View All_ & _Select View_.
     - **Spectral View** -	Displays a sonogram of the current window. This can be especially useful for locating individual clicks	or pops, which show themselves as bright, vertical lines. 
   - **Markers** - There are 2 kinds of markers in GWC. Editing markers, which precisely identify a location in the audio, and the highlighting function will "snap" to a marker which is less than 10 pixels from the cursor. The second type of marker is the song marker.
     - **Toggle Beginning Marker** - sets or unsets an edit marker at the beginning of the highlighted selection (or current view)
@@ -180,23 +181,24 @@ If the menu icons are missing (disabled by default for GTK2 apps), they can be e
       + **Windowing Function**
 	      - _Blackman_: Try this second
 	      - _Hybrid Blackman-Full Pass_: Fastest, may work well for relatively "clean" audio files with only a little hiss
-	      - _Hanning-overlap-add_: Usually this is the one you want
+	      - _Hanning-overlap-add_: Usually this is the one you want (Default)
       + **Noise Suppression Method**
         - _Weiner_: A little better than Power Spectral Subtraction
         - _Power Spectral Subtraction_: Crudest
         - _Ephram-Malah 1984_: Pretty darn good
-        - _Lorber & Hoeldrich_: Large improvement over Ephram-Malah
+        - _Lorber & Hoeldrich_: Large improvement over Ephram-Malah (Default)
     - **Preferences**
       + **Seconds of audio preselected when "S" key is struck** - Stop playback and select audio from "current_position - S_seconds"  to "current_position"
       +	**Normalize values for declick, denoise?** - The normalize option asks libsndfile to normalize the audio data on the interval -1.0 to 1.0, it appears to make no difference, and it really only there for testing. Set to 1 for normalization, 0 for non-normalized data. 
       +	**Silence estimate in seconds for marking songs** - Used for _Markers->Mark Songs_
       +	**Log frequency in sonogram** - Logarithmic frequency scale
-      +	**Audio Device** - Output Device, ALSA output example: _hw:1,0_
+      +	**Audio Device** - Output Device. ALSA example: _hw:1,0_
+            NOTE: I only tested the ALSA output mode. The OSS/Pulseaudio compatibility might be affected, use at your own risk.
 
 
 ## ToDo
 
-This codebase seems a little clunky from the UI perspective. Considering it is more than a decade old, it makes no sense to build more advanced features on top of this code. A good idea might be a complete code rewrite, while keeping the original audio restoration function base. The GWC is still missing:
+This codebase seems a little clunky from the UI perspective. Considering that it is more than a decade old, it makes no sense to build more advanced features on top of this code. A good idea might be a complete code rewrite, while keeping the original audio restoration algorithms. The GWC is still missing:
 
  * multithreaded audio processing
  * lossless audio format support (FLAC)
