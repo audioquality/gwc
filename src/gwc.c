@@ -1774,117 +1774,89 @@ void open_wave_filename(void)
     }
 }
 
-void store_filename(GtkFileSelection * selector, gpointer user_data)
-{
-    gchar strbuf[PATH_MAX+1];
-    strncpy(strbuf, gtk_file_selection_get_filename(GTK_FILE_SELECTION
-					   (file_selector)), PATH_MAX);
-    char* ext = strrchr(strbuf, '.');
-    d_print("Selected file: %s\n", strbuf);
-    if (strcasecmp(ext, ".wav") == 0) {
-      strcpy(wave_filename, strbuf);
-      open_wave_filename();
-      if (file_is_open) {
-	  sprintf(strbuf, "File: %s", wave_filename);
-      } else {
-	  sprintf(strbuf, "Error opening file: %s", wave_filename);
-      }
-      set_status_text(strbuf);
-    } else {
-      set_status_text("File type not supported. Please open a 16bit 44.1kHz WAV file.");
-    }
-}
-
-void store_selection_filename(GtkFileSelection * selector,
-			  gpointer user_data)
-{
-
-    strncpy(save_selection_filename,
-	   gtk_file_selection_get_filename(GTK_FILE_SELECTION
-					   (file_selector)), PATH_MAX);
-
-    if (strcmp(save_selection_filename, wave_filename)) {
-	save_selection_as_wavfile(save_selection_filename, &audio_view);
-    } else {
-	warning("Cannot save selection over the currently open file!");
-    }
-
-}
-
 void open_file_selection(GtkWidget * widget, gpointer data)
 {
-    if ((file_processing == FALSE) && (audio_playback == FALSE)) {
+    if ((file_processing == TRUE) || (audio_playback == TRUE))
+      return;
 
-	/* Create the selector */
-	file_selector =
-	    gtk_file_selection_new("Select a WAV file:");
+    GtkWidget *dialog = gtk_file_chooser_dialog_new ("Open WAV File:",
+					  GTK_WINDOW(main_window),
+					  GTK_FILE_CHOOSER_ACTION_OPEN,
+					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					  GTK_STOCK_OPEN, GTK_RESPONSE_ACCEPT,
+					  NULL);
+					  
+    GtkFileFilter *filter = gtk_file_filter_new();
+    gtk_file_filter_set_name (filter, "WAV Files");
+    gtk_file_filter_add_pattern (filter, "*.wav");    
+    gtk_file_chooser_set_filter (GTK_FILE_CHOOSER (dialog), filter);
 
-	gtk_file_selection_set_filename(GTK_FILE_SELECTION(file_selector),
-					pathname);
+    gtk_file_chooser_set_current_folder (GTK_FILE_CHOOSER (dialog), dirname(pathname));
+
+    if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+	char *filename;
+	char strbuf[PATH_MAX+1];
 	
-	gtk_signal_connect(GTK_OBJECT
-			   (GTK_FILE_SELECTION(file_selector)->ok_button),
-			   "clicked", GTK_SIGNAL_FUNC(store_filename),
-			   NULL);
+	filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+	d_print("Selected file: %s\n", filename);
 
-	/* Ensure that the dialog box is destroyed when the user clicks a button. */
-	gtk_signal_connect_object(GTK_OBJECT
-				  (GTK_FILE_SELECTION(file_selector)->
-				   ok_button), "clicked",
-				  GTK_SIGNAL_FUNC(gtk_widget_destroy),
-				  (gpointer) file_selector);
-
-	gtk_signal_connect_object(GTK_OBJECT
-				  (GTK_FILE_SELECTION(file_selector)->
-				   cancel_button), "clicked",
-				  GTK_SIGNAL_FUNC(gtk_widget_destroy),
-				  (gpointer) file_selector);
-
-
-	/* Display the dialog */
-	gtk_widget_show(file_selector);
+	char* ext = strrchr(filename, '.');
+	if (strcasecmp(ext, ".wav") == 0) {
+	  strcpy(wave_filename, filename);
+	  open_wave_filename();
+	  if (file_is_open) {
+	      sprintf(strbuf, "File: %s", wave_filename);
+	  } else {
+	      sprintf(strbuf, "Error opening file: %s", wave_filename);
+	  }
+	  set_status_text(strbuf);
+	} else {
+	  set_status_text("File type not supported. Please open a 16bit 44.1kHz WAV file.");
+	}
+	g_free (filename);
     }
+    gtk_widget_destroy (dialog);
 }
 
 void save_as_selection(GtkWidget * widget, gpointer data)
 {
 
-    if ((file_processing == FALSE) && (file_is_open == TRUE) && (audio_playback == FALSE)) {
+    if ((file_processing == TRUE) || (file_is_open == FALSE) || (audio_playback == TRUE))
+      return;
 
-	if (audio_view.selection_region == TRUE) {
-
-	    /* Create the selector */
-	    file_selector =
-		gtk_file_selection_new("Filename to save selection to:");
-
-	    gtk_file_selection_set_filename(GTK_FILE_SELECTION
-					    (file_selector), pathname);
-
-	    gtk_signal_connect(GTK_OBJECT
-			       (GTK_FILE_SELECTION(file_selector)->
-				ok_button), "clicked",
-			       GTK_SIGNAL_FUNC(store_selection_filename),
-			       NULL);
-
-	    /* Ensure that the dialog box is destroyed when the user clicks a button. */
-	    gtk_signal_connect_object(GTK_OBJECT
-				      (GTK_FILE_SELECTION(file_selector)->
-				       ok_button), "clicked",
-				      GTK_SIGNAL_FUNC(gtk_widget_destroy),
-				      (gpointer) file_selector);
-
-	    gtk_signal_connect_object(GTK_OBJECT
-				      (GTK_FILE_SELECTION(file_selector)->
-				       cancel_button), "clicked",
-				      GTK_SIGNAL_FUNC(gtk_widget_destroy),
-				      (gpointer) file_selector);
-
-	    /* Display the dialog */
-	    gtk_widget_show(file_selector);
-	} else {
-	    info("Please highlight a region to save first");
-	}
+    if (audio_view.selection_region == FALSE) {
+      info("Please highlight a region to save first");
+      return;
     }
+
+    GtkWidget *dialog;
+    dialog = gtk_file_chooser_dialog_new ("Save selection to file:",
+					  GTK_WINDOW(main_window),
+					  GTK_FILE_CHOOSER_ACTION_SAVE,
+					  GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+					  GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+					  NULL);
+    gtk_file_chooser_set_do_overwrite_confirmation (GTK_FILE_CHOOSER (dialog), TRUE);
+    
+    GtkFileFilter *filter = gtk_file_filter_new();
+    gtk_file_filter_add_pattern (filter, "*.wav");    
+    gtk_file_chooser_set_filter (GTK_FILE_CHOOSER (dialog), filter);    
+    
+    gtk_file_chooser_set_filename (GTK_FILE_CHOOSER (dialog), pathname);
+      
+    if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_ACCEPT) {
+	char *filename;
+	filename = gtk_file_chooser_get_filename (GTK_FILE_CHOOSER (dialog));
+	
+	if (strcmp(filename, wave_filename)) {
+	    save_selection_as_wavfile(filename, &audio_view);
+	} else {
+	    warning("Cannot save selection over the currently open file!");
+	}	
+	
+	g_free (filename);
+    }
+    gtk_widget_destroy (dialog);
 }
 
 #define GNOMEUIINFO_ITEM_ACCEL(label, tooltip, callback, xpm_data, accel) \
