@@ -1064,10 +1064,13 @@ void start_gwc_playback(GtkWidget * widget, gpointer data)
 	
     cursor_samples_per_pixel = (audio_view.last_sample - audio_view.first_sample) / audio_view.canvas_width;
     cursor_millisec = (cursor_samples_per_pixel * 1000) / prefs.rate;
-    /* lower limit of 1/100th second on screen redraws */
+    // limits on screen redraws
+    // too high value would cause cursor "jump" at the end of the playback
     if (cursor_millisec < 20)
 	cursor_millisec = 19;
-	
+    else if (cursor_millisec > 100)
+	cursor_millisec = 100;
+
     audio_playback = TRUE;
     audio_debug_print("play_a_block timer: %ld ms\n", playback_millisec);
     audio_debug_print("update_cursor timer: %ld ms\n", cursor_millisec);
@@ -2405,7 +2408,6 @@ int main(int argc, char *argv[])
 			  | GDK_POINTER_MOTION_HINT_MASK);
 
     gtk_box_pack_start(GTK_BOX(main_vbox), audio_drawing_area, TRUE, TRUE, 0);
-
 
     scroll_pos = gtk_adjustment_new(1.0, 0.0, 100.0, 5.0, 5.0, 0.0);
     hscrollbar = gtk_hscrollbar_new(GTK_ADJUSTMENT(scroll_pos));

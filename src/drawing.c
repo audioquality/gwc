@@ -47,6 +47,9 @@ extern long markers[] ;
 extern long n_markers ;
 extern long num_song_markers, song_markers[] ;
 
+extern struct view audio_view;
+extern int audio_playback;
+extern long playback_startplay_position;
 
 GdkColor red_gdk_color = {0, 65535, 0, 0} ;
 GdkColor green_gdk_color = {0, 0, 65535, 0} ;
@@ -137,9 +140,27 @@ draw_a_line(GdkGC *gc, gint x1, gint y1, gint x2, gint y2, GdkColor *color, int 
 static void
 draw_cursor_line(GdkGC *gc, gint x, gint l, GdkColor *color)
 {
-	gdk_gc_set_foreground(gc, color) ;
-        if (x > SHRT_MIN && x < SHRT_MAX)
- 	   gdk_draw_line(highlight_pixmap, gc, x, 20, x, l-20);
+        if ((x <= SHRT_MIN) || (x >= SHRT_MAX))
+	    return;
+	
+	gint y1, y2;
+	    
+	if (audio_view.channel_selection_mask == 0x01) {
+	    // playing LEFT channel
+	    y1 = 20;
+	    y2 = (l >> 1) - 20;
+	} else if (audio_view.channel_selection_mask == 0x02) {
+	    // playing RIGHT channel
+	    y1 = (l >> 1) + 20;
+	    y2 = l - 20;
+	} else {
+	    // playing both channels
+	    y1 = 20;
+	    y2 = l - 20;
+	}
+	
+	gdk_gc_set_foreground(gc, color);
+	gdk_draw_line(highlight_pixmap, gc, x, y1, x, y2); 
 
 }
 
@@ -265,11 +286,6 @@ void draw_compressed_audio_image(struct view *v, struct sound_prefs *p, GtkWidge
 
     }
 }
-
-
-extern struct view audio_view ;
-extern int audio_playback;
-extern long playback_startplay_position;
 
 int audio_area_button_event(GtkWidget *c, GdkEventButton *event, gpointer data)
 {
