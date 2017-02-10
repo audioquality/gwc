@@ -1246,6 +1246,7 @@ void select_all(GtkWidget * widget, gpointer data)
 	audio_view.selected_first_sample = audio_view.first_sample;
 	audio_view.selected_last_sample = audio_view.last_sample;
 	audio_view.selection_region = TRUE;
+	audio_view.channel_selection_mask = 0x03;
 	main_redraw(FALSE, TRUE);
 	file_processing = FALSE;
     }
@@ -1394,6 +1395,7 @@ void view_all(GtkWidget * widget, gpointer data)
 	audio_view.first_sample = 0;
 	audio_view.last_sample = prefs.n_samples - 1;
 	audio_view.selection_region = FALSE;
+	audio_view.channel_selection_mask = 0x03;
 	set_scroll_bar(prefs.n_samples - 1, audio_view.first_sample,
 		       audio_view.last_sample);
 	/* set_scroll_bar redraws */
@@ -1528,6 +1530,7 @@ gboolean  key_press_cb(GtkWidget * widget, GdkEventKey * event, gpointer data)
 		audio_view.selected_first_sample = 0;
 		audio_view.selected_last_sample = prefs.n_samples - 1;
 		audio_view.selection_region = FALSE;
+		audio_view.channel_selection_mask = 0x03;
 		main_redraw(FALSE, TRUE);
 	    }
 	    break;
@@ -1750,6 +1753,7 @@ void open_wave_filename(void)
 		    audio_view.last_sample =
 			MAX(0, audio_view.last_sample);
 		}
+		audio_view.channel_selection_mask = 0x03;
 		audio_view.selection_region = FALSE;
 		file_is_open = TRUE;
 		fill_sample_buffer(&prefs);
