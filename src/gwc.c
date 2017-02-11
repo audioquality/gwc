@@ -1925,7 +1925,7 @@ GnomeUIInfo edit_menu[] = {
 		       decrackle, decrackle_xpm, GDK_c),
 
     GNOMEUIINFO_ITEM_ACCEL(" Estimate",
-		 "Estimate signal (> 500 samples) in current view or selection",
+		 "Estimate signal in current view or selection",
 		 estimate, estimate_xpm, GDK_k),
 
     GNOMEUIINFO_ITEM_ACCEL(" Sample",
@@ -2054,7 +2054,7 @@ GnomeUIInfo transport_toolbar_info[] = {
     GNOMEUIINFO_ITEM("Stop", "Stop audio playback",
 		 stop_all_playback_functions, stop_xpm),
 
-    GNOMEUIINFO_ITEM("Zoom Select", "Zoom in on selected portion",
+    GNOMEUIINFO_ITEM("Zoom Select", "Zoom in on selected audio section",
 		 zoom_select, zoom_sel_xpm),
 
     GNOMEUIINFO_ITEM("Zoom In", "Zoom in", zoom_in,
@@ -2063,7 +2063,7 @@ GnomeUIInfo transport_toolbar_info[] = {
     GNOMEUIINFO_ITEM("Zoom Out", "Zoom out", zoom_out,
 		 zoom_out_xpm),
 
-    GNOMEUIINFO_ITEM("View All", "View Entire audio file",
+    GNOMEUIINFO_ITEM("View All", "View entire audio file",
 		 view_all,
 		 view_all_xpm),
 
@@ -2071,7 +2071,7 @@ GnomeUIInfo transport_toolbar_info[] = {
 		 select_all,
 		 select_all_xpm),
 
-    GNOMEUIINFO_ITEM("Spectral View", "Toggle Sonogram",
+    GNOMEUIINFO_ITEM("Spectral View", "Toggle sonogram",
 		 display_sonogram,
 		 spectral_xpm),
 
@@ -2102,7 +2102,7 @@ GnomeUIInfo edit_toolbar_info[] = {
 		 decrackle, decrackle_xpm),
 
     GNOMEUIINFO_ITEM("Estimate",
-		 "Estimate signal (> 300 samples) in current view or selection",
+		 "Estimate signal in current view or selection",
 		 estimate, estimate_xpm),
 
     GNOMEUIINFO_ITEM("Sample",
@@ -2110,7 +2110,7 @@ GnomeUIInfo edit_toolbar_info[] = {
 		 noise_sample, noise_sample_xpm),
 
     GNOMEUIINFO_ITEM("Denoise",
-		 "Remove noise from  current view or selection",
+		 "Remove noise from current view or selection",
 		 remove_noise, remove_noise_xpm),
 
     GNOMEUIINFO_ITEM("Silence", "Insert silence with size of current selection to audio data",
