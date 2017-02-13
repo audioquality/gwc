@@ -43,20 +43,23 @@ char tmpdir[PATH_MAX+1];
 // create temp directory
 void mktempdir(void) {
 
-    strcpy(tmpdir,"/tmp/");
+    // this function equals to: strcpy(tmpdir,"/tmp/");
+    strcpy(tmpdir, P_tmpdir);
+    strcat(tmpdir, "/");
     return;
     
-    // tmp-subdir is working, but is not being removed after program quits
+    // to create tmp-subdir would work, but the directory is not being removed after program quits :(
+    // 
     char template[] = "/tmp/gwc_XXXXXX";
     char *fd;
     
     fd = mkdtemp(template);
     if (fd != NULL) {
-	strcat(tmpdir, fd);
-	strcat(tmpdir, "/");
+	strcpy(tmpdir, fd);
     } else {
-	strcpy(tmpdir,"/tmp/");
+	strcpy(tmpdir, P_tmpdir);
     }
+    strcat(tmpdir, "/");
 }
 
 int get_undo_levels(void)
