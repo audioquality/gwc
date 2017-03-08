@@ -31,18 +31,18 @@ This fork throws the non-essential features overboard and improves the usability
 **New in this (master branch) version**:
 
   * new playback position behavior: 
-    * continue playback from where it stopped, if it's visible or within the selection
+    * continue playback from where it stopped
     * if no audio is selected and the playback cursor is outside of the view, playback starts at the beginning of current view
     * autoscroll the wave during playback (if not zoomed in too much)
-    * start playback at custom position with mouse-rightclick
-  * if only one channel is selected, it is played to both L and R outputs to help identify single channel distortions
+    * start playback at any position with mouse-rightclick
+  * if only one channel is selected, it is played as mono to both L and R outputs to help identify single channel distortions
   * many new keyboard shortcuts, including wave scrolling using arrows
   * remember the main window size between restarts
   * new open/save GTK dialogs
   * cleaned code, no compilation warnings
   * Removed cluttered, non-essential features:
     * ledbar - the way it was implemented it was more confusing than useful
-    * batch execution - this was a bad idea, always creating inferior output
+    * batch mode - this was a bad idea, always creating inferior output
     * cdrdao export - if you really need to burn an audio CD, see [Brasero](https://wiki.gnome.org/Apps/Brasero)
     * lossy compression support - if you really need to export or edit different formats, use dedicated tools:
       - Audio Editor: [Audacity](http://www.audacityteam.org)
@@ -51,7 +51,7 @@ This fork throws the non-essential features overboard and improves the usability
 
 **v0.30 branch**
 
-This branch contains few fixes and improvements from the master branch, but also the old non-essential code, like the confusing ledbar, inferior batch functionality, and lossy compression support. Check out this branch, if you know what you are doing.
+This branch contains a few fixes and improvements from the master branch, but also the old non-essential code, like the confusing ledbar, inferior batch functionality, and lossy compression support. Check out this branch, if you know what you are doing.
 
 ##Installation
 
@@ -69,7 +69,7 @@ Download, Compile & Install:
     make
     make install
 
-The desktop shortcut is _Menu->Multimedia->Gnome Wave Cleaner_ , or run in terminal:
+The program shortcut is in _Menu->Multimedia->Gnome Wave Cleaner_ , or run in terminal:
 
     gwc
 

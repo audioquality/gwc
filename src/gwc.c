@@ -2,8 +2,8 @@
 *   Gnome Wave Cleaner Version 0.21
 *   Copyright (C) 2001,2002,2003,2004,2005,2006 Jeffrey J. Welty
 *
-*   Gnome Wave Cleaner Version 0.30
-*   2017 clixt.net
+*   Gnome Wave Cleaner Version 0.30, 0.40
+*   2017 mod by clixt.net
 *   
 *   This program is free software; you can redistribute it and/or
 *   modify it under the terms of the GNU General Public License
