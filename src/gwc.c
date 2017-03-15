@@ -934,6 +934,7 @@ void stop_all_playback_functions(GtkWidget * widget, gpointer data)
         gtk_timeout_remove(cursor_timer);    
 	cursor_timer = -1 ;
     }
+    
     stop_playback(0);
     
     audio_playback = FALSE;
@@ -978,9 +979,9 @@ gint update_cursor(gpointer data)
     if (!audio_is_looping) {
       long first, last;
       get_region_of_interest(&first, &last, &audio_view);
-      long processed_samples = get_processed_samples();
-      audio_debug_print("update_cursor processed samples = %lu\n", processed_samples);
-      if ((processed_samples == 0) || (processed_samples >= (last - playback_startplay_position))) {
+      long processed_frames = get_processed_frames();
+      audio_debug_print("update_cursor processed frames = %lu\n", processed_frames);
+      if ((processed_frames == 0) || (processed_frames >= (last - playback_startplay_position))) {
 	  stop_all_playback_functions(NULL, NULL);
 	  // repaint cursor
 	  main_redraw(TRUE, TRUE);

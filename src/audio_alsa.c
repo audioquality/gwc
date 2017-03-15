@@ -40,8 +40,7 @@ snd_pcm_uframes_t buffer_total_frames; /* number of frames in alsa device buffer
 
 static void snd_perr(char *text, int err)
 {
-    d_print("Sound Error: %s, %s\n", text, snd_strerror(err));
-    warning(text);
+    d_print("ALSA Error: %s, %s\n", text, snd_strerror(err));
 }
 
 int audio_device_open(char *output_device)
@@ -49,10 +48,9 @@ int audio_device_open(char *output_device)
     int err = snd_pcm_open(&handle, output_device, /*"default",*/
                            SND_PCM_STREAM_PLAYBACK, SND_PCM_NONBLOCK);
     if (err < 0) {
-        d_print("ALSA audio_device_open: snd_pcm_open failed, err %i\n", err);
+        snd_perr("audio_device_open: snd_pcm_open failed", err);
         return -1;
     }
-    //d_print("Opened ALSA audio device: %s\n",output_device);
     
     written_frames = 0;
     drain_delta=0 ;
@@ -74,67 +72,61 @@ int audio_device_set_params(AUDIO_FORMAT *format, int *channels, int *rate)
 
     err = snd_pcm_hw_params_any(handle, params);
     if (err < 0) {
-        snd_perr("ALSA audio_device_set_params: snd_pcm_hw_params_any", err);
+        snd_perr("audio_device_set_params: snd_pcm_hw_params_any", err);
         return -1;
     }
 
     err = snd_pcm_hw_params_set_access(handle, params, SND_PCM_ACCESS_RW_INTERLEAVED);
     if (err < 0) {
-        snd_perr("ALSA audio_device_set_params: snd_pcm_hw_params_set_access", err);
+        snd_perr("audio_device_set_params: snd_pcm_hw_params_set_access", err);
         return -1;
     }
 
-
-
-    switch (*format)
-    {
-    case GWC_U8:     alsa_format = SND_PCM_FORMAT_U8; break;
-    case GWC_S8:     alsa_format = SND_PCM_FORMAT_S8; break;
-    case GWC_S16_BE: alsa_format = SND_PCM_FORMAT_S16_BE; break;
-    default:
-    case GWC_S16_LE: alsa_format = SND_PCM_FORMAT_S16_LE; break;
+    switch (*format) {
+        case GWC_U8:     alsa_format = SND_PCM_FORMAT_U8; break;
+        case GWC_S8:     alsa_format = SND_PCM_FORMAT_S8; break;
+        case GWC_S16_BE: alsa_format = SND_PCM_FORMAT_S16_BE; break;
+        default:
+        case GWC_S16_LE: alsa_format = SND_PCM_FORMAT_S16_LE;
     }
 
     if (snd_pcm_hw_params_set_format(handle, params, alsa_format) < 0) {
-        snd_perr("ALSA audio_device_set_params: snd_pcm_hw_params_set_format", err);
+        snd_perr("audio_device_set_params: snd_pcm_hw_params_set_format", err);
         return -1;
     }
     if (snd_pcm_hw_params_get_format(params, &alsa_format) < 0) {
-        snd_perr("ALSA audio_device_set_params: snd_pcm_hw_params_get_format", err);
+        snd_perr("audio_device_set_params: snd_pcm_hw_params_get_format", err);
         return -1;
     }
 
-    switch (alsa_format)
-    {
-    case SND_PCM_FORMAT_U8: *format = GWC_U8; break;
-    case SND_PCM_FORMAT_S8 : *format = GWC_S8; break;
-    case SND_PCM_FORMAT_S16_BE: *format = GWC_S16_BE; break;
-    case SND_PCM_FORMAT_S16_LE: *format = GWC_S16_LE; break;
-    default: *format = GWC_UNKNOWN; break;
+    switch (alsa_format) {
+        case SND_PCM_FORMAT_U8: *format = GWC_U8; break;
+        case SND_PCM_FORMAT_S8 : *format = GWC_S8; break;
+        case SND_PCM_FORMAT_S16_BE: *format = GWC_S16_BE; break;
+        case SND_PCM_FORMAT_S16_LE: *format = GWC_S16_LE; break;
+        default: *format = GWC_UNKNOWN;
     }
 
-
-
+    //NOTE: this fails, if strictly stereo hardware is being set to anything else than 2 channels!
+    // Print debug info, but continue. This will be handled by process_audio() in audio_util.c.
     err = snd_pcm_hw_params_set_channels(handle, params, *channels);
     if (err < 0) {
-        snd_perr("ALSA audio_device_set_params: snd_pcm_hw_params_set_channels", err);
-        return -1;
+        //snd_perr("ALSA audio_device_set_params: snd_pcm_hw_params_set_channels", err);
+        d_print("ALSA Error: audio_device_set_params: snd_pcm_hw_params_set_channels %i failed\n", *channels);
     }
 
+    // read how many channels do we have available, and overwrite the input variable
     utmp = (unsigned int)*channels ;
-
     if (snd_pcm_hw_params_get_channels(params, &utmp) < 0) {
-        snd_perr("ALSA audio_device_set_params: snd_pcm_hw_params_get_channels", err);
+        snd_perr("audio_device_set_params: snd_pcm_hw_params_get_channels", err);
         return -1;
     }
     *channels = (int)utmp ;
 
-
-
     utmp = (unsigned int)*rate ;
     err = snd_pcm_hw_params_set_rate_near(handle, params, &utmp, 0);
     if (err < 0) {
-        snd_perr("ALSA audio_device_set_params: snd_pcm_hw_params_set_rate_near", err);
+        snd_perr("audio_device_set_params: snd_pcm_hw_params_set_rate_near", err);
         return -1;
     }
     *rate = (int)utmp ;
@@ -142,17 +134,15 @@ int audio_device_set_params(AUDIO_FORMAT *format, int *channels, int *rate)
 
     err = snd_pcm_hw_params(handle, params);
     if (err < 0) {
-        snd_perr("ALSA audio_device_set_params: snd_pcm_hw_params", err);
+        snd_perr("audio_device_set_params: snd_pcm_hw_params", err);
         return -1;
     }
 
     err = snd_pcm_prepare(handle);
     if (err < 0) {
-        snd_perr("ALSA audio_device_set_params: snd_pcm_prepare", err);
+        snd_perr("audio_device_set_params: snd_pcm_prepare", err);
         return -1;
     }
-
-    //fprintf(stderr, "audio_device_handle %i\n",(int)handle);
 
     return 0;
 }
@@ -170,7 +160,7 @@ static int recover_snd_handle(int err)
 	fprintf(stderr, "recover_snd_handle: err == -EPIPE\n");
         err = snd_pcm_prepare(handle);
         if (err < 0)
-            snd_perr("ALSA recover_snd_handle: can't recover underrun, prepare failed", err);
+            snd_perr("recover_snd_handle: can't recover underrun, prepare failed", err);
         return 0;
     }
     else if (err == -ESTRPIPE) { /* suspend */
@@ -181,7 +171,7 @@ static int recover_snd_handle(int err)
         if (err < 0) {
             err = snd_pcm_prepare(handle);
             if (err < 0)
-                snd_perr("ALSA recover_snd_handle: can't recover suspend, prepare failed", err);
+                snd_perr("recover_snd_handle: can't recover suspend, prepare failed", err);
         }
         return 0;
     }
@@ -209,7 +199,7 @@ int audio_device_write(unsigned char *data, int count)
           exit(1) ;
         } else if (recover_snd_handle(err) < 0) {
           //fprintf(stderr, "audio_device_write %d %d %d\n",(int)handle,(int)data,(int)count_frames);
-          snd_perr("ALSA audio_device_write: snd_pcm_writei", err);
+          snd_perr("audio_device_write: snd_pcm_writei", err);
           exit(1) ;
           return -1;
         }
@@ -249,29 +239,33 @@ long audio_device_processed_bytes(void)
 
 void audio_device_close(int drain)
 {
-    if (handle != NULL) {
-        int err;
-
-	//printf("Closing the ALSA audio device\n") ;
-
-	_audio_device_processed_bytes = query_processed_bytes() ;
-
-	if(drain)
-	    err = snd_pcm_drain(handle);
-
-        err = snd_pcm_drop(handle);
-        if (err < 0) {
-            snd_perr("ALSA audio_device_close: snd_pcm_drop", err);
-        }
-
-        err = snd_pcm_close(handle);
-        if (err < 0) {
-            snd_perr("ALSA audio_device_close: snd_pcm_close", err);
-        }
-
-        handle = NULL;
-    }
     drain_delta=0 ;
+    
+    if (handle == NULL)
+        return;
+    
+    d_print("ALSA audio_device_close... ");
+    
+    _audio_device_processed_bytes = query_processed_bytes() ;
+    
+    int err;
+    if (drain) {
+        err = snd_pcm_drain(handle);
+        if (err < 0)
+            snd_perr("snd_pcm_drain", err);
+    }
+    
+    err = snd_pcm_drop(handle);
+    if (err < 0)
+        snd_perr("snd_pcm_drop", err);
+
+    err = snd_pcm_close(handle);
+    if (err < 0)
+        snd_perr("snd_pcm_close", err);
+
+    d_print(" Closed\n");
+    handle = NULL;
+
 }
 
 int audio_device_best_buffer_size(int playback_bytes_per_block)
@@ -284,7 +278,7 @@ int audio_device_best_buffer_size(int playback_bytes_per_block)
 
     err = snd_pcm_status(handle, status);
     if (err < 0) {
-        snd_perr("ALSA audio_device_best_buffer_size: snd_pcm_status", err);
+        snd_perr("audio_device_best_buffer_size: snd_pcm_status", err);
         return 0;
     }
 
@@ -296,14 +290,14 @@ int audio_device_best_buffer_size(int playback_bytes_per_block)
 
 
     if(frame_size < 4096 && frame_size > 0) {
-	int s = frame_size ;
-	while(frame_size < 4096) frame_size += s ;
-	printf("ALSA audio_device_adjusted_buffer_size:%d\n", frame_size) ;
+        int s = frame_size ;
+        while(frame_size < 4096) frame_size += s ;
+        printf("ALSA audio_device_adjusted_buffer_size:%d\n", frame_size) ;
     }
 
     if(frame_size == 0) {
-	warning("Your ALSA audio device driver gives invalid information for its buffer size, defaulting to 4K bytes, this may produce strange playback results") ;
-	frame_size = 4096 ;
+        warning("Your ALSA audio device driver gives invalid information for its buffer size, defaulting to 4K bytes, this may produce strange playback results") ;
+        frame_size = 4096 ;
     }
 
     return frame_size ;
@@ -316,13 +310,12 @@ int audio_device_nonblocking_write_buffer_size(int maxbufsize,
     snd_pcm_sframes_t frames = snd_pcm_avail_update(handle);
 
     if (frames < 0) {
-        snd_perr("audio_device_nonblocking_write_buffer_size: snd_pcm_avail_update",
-             frames);
+        fprintf(stderr, "ALSA error: audio_device_nonblocking_write_buffer_size: snd_pcm_avail_update failed\n");
 
-	if (recover_snd_handle(frames) < 0) {
-	    fprintf(stderr, "audio_device_nonblocking_write_buffer_size: could not recover handle\n");
-	    return -1 ;
-	}
+        if (recover_snd_handle(frames) < 0) {
+            fprintf(stderr, "ALSA error: audio_device_nonblocking_write_buffer_size: could not recover handle\n");
+            return -1 ;
+        }
     }
 
     len = snd_pcm_frames_to_bytes(handle, frames);
@@ -332,8 +325,6 @@ int audio_device_nonblocking_write_buffer_size(int maxbufsize,
 
     if (len > playback_bytes_remaining)
         len = playback_bytes_remaining;
-
-    /*     printf("audio_device_nonblocking_write_buffer_size:%d\n", len); */
 
     return len;
 }

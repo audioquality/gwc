@@ -40,6 +40,7 @@ int wavefile_fd = -1 ;
 long audio_bytes_written ;
 int rate = 44100 ;
 int stereo = 1 ;
+int channels = 2 ;
 int audio_bits = 16 ;
 int BYTESPERSAMPLE = 2 ;
 int MAXSAMPLEVALUE = 1 ;
@@ -121,10 +122,9 @@ void write_wav_header(int thefd, int speed, long bcount, int bits, int stereo)
 	    write(thefd, &header, sizeof(header));
 }
 
-void config_audio_device(int rate_set, int bits_set, int stereo_set)
+int config_audio_device(int rate_set, int bits_set, int stereo_set)
 {
     AUDIO_FORMAT format,format_set;
-    int channels ;
 /*      int fragset = 0x7FFF000F ;  */
 
     bits_set = 16 ;
@@ -150,7 +150,7 @@ void config_audio_device(int rate_set, int bits_set, int stereo_set)
     rate = rate_set ;
 
     if (audio_device_set_params(&format_set, &channels, &rate) == -1) {
-	warning("unknown error setting device parameter") ;
+	d_print("Audio: error setting device parameters, channels %i, rate: %i\n", channels, rate);
     }
 
     if(format != format_set) {
@@ -168,28 +168,27 @@ void config_audio_device(int rate_set, int bits_set, int stereo_set)
 	printf(buf);
     }
 
-    if(channels != stereo + 1) {
-	char buf[80] ;
-	if(stereo == 0)
-	    snprintf(buf, sizeof(buf), "Failed to set mono mode\nYour sound card may not support mono\n") ;
-	else
-	    snprintf(buf, sizeof(buf), "Failed to set stereo mode\nYour sound card may not support stereo\n") ;
+    if(channels < stereo + 1) {
+	char buf[100] ;
+	snprintf(buf, sizeof(buf), "Failed to set stereo mode\nYour sound card may not support stereo\n") ;
 	warning(buf) ;
 	printf(buf);
     }
-    stereo_set = channels - 1 ;
+    //NOTE: allow "stereo"(refers to input data) and "channels"(refers to audio hardware) to be different
+    //stereo_set = channels - 1 ;
 
-    if(ABS(rate_set-rate) > 10) {
+    if(ABS(rate_set - rate) > 10) {
 	char buf[80] ;
 	snprintf(buf, sizeof(buf), "Rate set to %d instead of %d\nYour sound card may not support the desired rate\n",
 	             rate_set, rate) ;
 	warning(buf) ;
 	printf(buf);
     }
-
+    
     rate = rate_set ;
     audio_bits = bits_set ;
-    stereo = stereo_set ;
+    
+    return 0;
 }
 
 /*
@@ -200,14 +199,20 @@ long get_processed_samples(void) {
 }
 
 /*
+ * return number of processed frames since opening the audio device
+ */
+long get_processed_frames(void) {
+    return get_processed_samples() / MAX(1,(2 - stereo));
+}
+
+/*
  * return playback position (current sample)
  */
 long get_playback_position(void) {
   
   extern int audio_is_looping;
   long current_position;
-  long processed_samples = get_processed_samples();
-  long processed_frames = processed_samples / MAX(1, (2 - stereo));
+  long processed_frames = get_processed_frames();
   //d_print("get_playback_position processed_frames = %ld\n", processed_frames);
   
   if ((playback_end_position - playback_startplay_position) >= processed_frames) {
@@ -336,10 +341,10 @@ long start_playback(char *output_device, struct view *v, struct sound_prefs *p, 
 int process_audio()
 {
     int i, frame;
-    unsigned char *p_char;
+    unsigned char *p_char, *p_char2;
     long len = 0, n_samples_to_read = 0, n_read = 0;
-    short *p_short ;
-    int *p_int ;
+    short *p_short, *p_short2 ;
+    int *p_int, *p_int2 ;
     
     if (audio_state == AUDIO_IS_IDLE) {
 	d_print("process_audio says NOTHING is going on.\n") ;
@@ -368,6 +373,10 @@ int process_audio()
     p_char = (unsigned char *)audio_buffer ;
     p_short = (short *)audio_buffer ;
     p_int = (int *)audio_buffer ;
+    p_char2 = (unsigned char *)audio_buffer2;
+    p_short2 = (short *)audio_buffer2;
+    p_int2 = (int *)audio_buffer2;
+    
 
     /* for now force playback to 16 bit... */
     #define BYTESPERSAMPLE 2
@@ -380,32 +389,63 @@ int process_audio()
 	}
     }
 
-    for(frame = 0  ; frame < n_read ; frame++) {
-	i = frame * (stereo + 1) ;
-	if(BYTESPERSAMPLE < 3) {
-	    // playback for left, right, or both channels
-	    if (audio_view.channel_selection_mask == 0x01) {
-		// play LEFT channel in both L and R outputs
-		p_short[i+1] = p_short[i];
-	    } else if (audio_view.channel_selection_mask == 0x02) {
-		// play RIGHT channel in both L and R outputs
-		p_short[i] = p_short[i+1];
-	    }
-	} else {
-	    // playback for left, right, or both channels
-	    if (audio_view.channel_selection_mask == 0x01) {
-		// play LEFT channel in both L and R outputs
-		p_int[i+1] = p_int[i];
-	    } else if (audio_view.channel_selection_mask == 0x02) {
-		// play RIGHT channel in both L and R outputs
-		p_int[i] = p_int[i+1];
+    // single selected channel, playback to both stereo outputs
+    if (stereo && (audio_view.channel_selection_mask != 0x03)) {
+	for(frame = 0  ; frame < n_read ; frame++) {
+	    i = frame * (stereo + 1) ;
+	    if(BYTESPERSAMPLE < 3) {
+		// playback for left, right, or both channels
+		if (audio_view.channel_selection_mask == 0x01) {
+		    // play LEFT channel in both L and R outputs
+		    p_short[i+1] = p_short[i];
+		} else if (audio_view.channel_selection_mask == 0x02) {
+		    // play RIGHT channel in both L and R outputs
+		    p_short[i] = p_short[i+1];
+		}
+	    } else {
+		// playback for left, right, or both channels
+		if (audio_view.channel_selection_mask == 0x01) {
+		    // play LEFT channel in both L and R outputs
+		    p_int[i+1] = p_int[i];
+		} else if (audio_view.channel_selection_mask == 0x02) {
+		    // play RIGHT channel in both L and R outputs
+		    p_int[i] = p_int[i+1];
+		}
 	    }
 	}
-
     }
-    #undef BYTESPERSAMPLE
     
-    len = audio_device_write(p_char, len);
+    // playback - send data to hw device
+    if (!stereo && (channels == 2)) {
+	// play mono file on stereo-only hardware
+	// copy single-channel source to both L and R channels of a stereo buffer
+	for (frame = 0  ; frame < n_read/2 ; frame++) {
+	    if(BYTESPERSAMPLE < 3) {
+		p_short2[frame << 1] = p_short[frame];
+		p_short2[(frame << 1) + 1] = p_short[frame];
+	    } else {
+		p_int2[frame << 1] = p_int[frame];
+		p_int2[(frame << 1) + 1] = p_int[frame];
+	    }
+	}
+	audio_device_write(p_char2, len);
+	
+	for (frame = n_read>>1  ; frame < n_read ; frame++) {
+	    if(BYTESPERSAMPLE < 3) {
+		p_short2[(frame - (n_read >> 1)) << 1] = p_short[frame];
+		p_short2[((frame - (n_read >> 1)) << 1) + 1] = p_short[frame];
+	    } else {
+		p_int2[(frame - (n_read >> 1)) << 1] = p_int[frame];
+		p_int2[((frame - (n_read >> 1)) << 1) + 1] = p_int[frame];
+	    }
+	}
+	audio_device_write(p_char2, len);
+    } else {
+	// play stereo
+	audio_device_write(p_char, len);
+    }
+    
+    #undef BYTESPERSAMPLE
     
     playback_samples_remaining -= n_read;
     
@@ -436,7 +476,6 @@ int process_audio()
 
 void stop_playback(unsigned int force)
 {
-    
     // remember current playback position to know where to start playback next
     extern int audio_is_looping;
     if ((get_processed_samples() == 0) && (!audio_is_looping)) {
@@ -452,26 +491,36 @@ void stop_playback(unsigned int force)
       force = 1;
     
     if (!force) {
-      int new_playback = audio_device_processed_bytes();
-      int old_playback;
+	long new_playback = get_processed_samples();
+	long old_playback, cycles = 0;
 
-      while(new_playback < playback_samples_remaining) {
-	  usleep(100) ;
-	  old_playback = new_playback;
-	  new_playback=audio_device_processed_bytes();
+	while (playback_samples_remaining > 0) {
+	    usleep(1000);
+	    old_playback = new_playback;
+	    new_playback = get_processed_samples();
 
-	  // check if more samples have been processed, if not,quit
-	  if (old_playback==new_playback){
-	      d_print("Playback appears frozen, breaking\n");
+	    // check if more samples have been processed. quit if stale
+	    if (old_playback == new_playback) {
+	      force = 1;
+	      d_print("Playback appears frozen, force stop\n");
 	      break;
-	  }
-      }
+	    }
+	    
+	    // force break anyway, if this takes too long
+	    if (++cycles > 300) {
+		force = 1;
+		break;
+	    }
+	}
     }
+
+    usleep(100);
     
-    usleep(100) ;
+    if (force)
+	d_print("stop_playback audio_device_close, force = 1\n");
     
-    audio_state = AUDIO_IS_IDLE ;
     audio_device_close(1-force) ;
+    audio_state = AUDIO_IS_IDLE ;
 }
 
 void sndfile_truncate(long n_samples)
