@@ -63,7 +63,7 @@ Install dependencies (Debian):
     
 Download, Compile & Install:
 
-    git clone https://github.com/clixt/gwc.git
+    git clone https://github.com/audioquality/gwc.git
     cd gwc/src
     ./configure
     make
