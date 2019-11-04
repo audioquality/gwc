@@ -1,10 +1,10 @@
-#Gnome Wave Cleaner
+# Gnome Wave Cleaner
 
 ![](doc/gwc.png)
 
 Denoise & Declick audio files. Clean up digitalized vinyl and tape recordings, remove common distortion while preserving the musical information. The input is expected to be 16bit 44.1kHz stereo WAV file format.
 
-##About
+## About
 
 Original GWC Homepage: [http://gwc.sourceforge.net]()
 
@@ -14,7 +14,7 @@ The original GWC attempts to do everything: audio recording, tag editing, format
 
 This fork throws the non-essential features overboard and improves the usability instead. I changed what I was missing while cleaning more than 70 albums:
 
-##Changes
+## Changes
 
 
 **The old version 0.21.19** had some interface issues that have been addressed:
@@ -53,7 +53,7 @@ This fork throws the non-essential features overboard and improves the usability
 
 This branch contains a few fixes and improvements from the master branch, but also the old non-essential code, like the confusing ledbar, inferior batch functionality, and lossy compression support. Check out this branch, if you know what you are doing.
 
-##Installation
+## Installation
 
 This is a Linux application, compiled and tested on Debian Linux 9 stretch. It should compile on any other distribution, the dependencies have to be preinstalled accordingly.
 
@@ -78,11 +78,11 @@ If the menu icons are missing (disabled by default for GTK2 apps), they can be e
     gconftool-2 --type bool --set /desktop/gnome/interface/menus_have_icons true
 
 
-##Usage
+## Usage
 
 **WARNING: GWC commits all changes to the original file instantly!** Undo saves the deltas needed to get back to the original, so on exit all your changes are saved. GWC will notify you that changes have been made, and give you the chance to exit (or open a new file) without making the changes permanent.
 
-###Keyboard functions
+### Keyboard functions
 
 | _Function_                 | _Keyboard Shortcut_ |
 |----------------------------|:--------------------|
@@ -121,13 +121,13 @@ If the menu icons are missing (disabled by default for GTK2 apps), they can be e
 |Amplify sonogram            |**B**|
 |Attenuate sonogram          |**V**|
 
-###Mouse functions
+### Mouse functions
 
   * **Left Click**: Select audio section
   * **Right Click**: Set the playback position & start playback
   * scrolling is currently not implemented, use keyboard arrows for navigation
 
-###Menu
+### Menu
 
   - **File**
     - **Open** - Opens an audio file for editing (16bit 44.1 kHz PCM WAV)
