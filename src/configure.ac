@@ -16,6 +16,7 @@ AC_PROG_RANLIB
 # Checks for libraries.
 AC_CHECK_LIB([asound], [snd_pcm_open])
 AC_CHECK_LIB([m], [main])
+AC_CHECK_LIB([meschach], [v_get])
 AC_CHECK_LIB([gtk-x11-2.0], [gtk_init])
 AC_CHECK_LIB([gdk-x11-2.0], [gtk_init])
 AC_CHECK_LIB([fftw3], [fftw_execute])
@@ -43,5 +44,4 @@ AC_TYPE_SIZE_T
 AC_TYPE_SIGNAL
 
 AC_CONFIG_FILES([Makefile])
-AC_CONFIG_SUBDIRS([meschach])
 AC_OUTPUT
