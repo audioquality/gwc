@@ -57,7 +57,7 @@
 #endif /* HAVE_PROTOTYPES_IN_STRUCT */
 
 /* for basic or larger versions */
-/* #undef COMPLEX */
+#define COMPLEX 1
 #define SPARSE 1
 
 /* for loop unrolling */
@@ -118,9 +118,11 @@
 #endif
 
 /* if the system has complex.h */
+/* This fails, because "complex" is also defined in zmatrix.h
 #ifdef HAVE_COMPLEX_H
 #include	<complex.h>
 #endif
+*/
 
 /* If prototypes are available & ANSI_C not yet defined, then define it,
 	but don't include any header files as the proper ANSI C headers

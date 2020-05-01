@@ -1,5 +1,5 @@
 /*
-*   Gnome Wave Cleaner Version 0.19
+*   GTK Wave Cleaner Version 0.19
 *   Copyright (C) 2001 Jeffrey J. Welty
 	FILE stat.c
 	PURPOSE - linear regression

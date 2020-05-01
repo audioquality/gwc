@@ -1,5 +1,5 @@
 /*****************************************************************************
-*   Gnome Wave Cleaner Version 0.19
+*   GTK Wave Cleaner Version 0.19
 *   Copyright (C) 2003 Jeffrey J. Welty
 *   
 *   This program is free software; you can redistribute it and/or
@@ -20,8 +20,8 @@
 /* audio_edit.c some functions to cut, copy, paste, ...frank 4.10.03 */
 
 #include <stdio.h>
-#include "audio_edit.h"
 #include "gwc.h"
+#include "audio_edit.h"
 #include "soundfile.h"
 
 extern struct sound_prefs prefs;

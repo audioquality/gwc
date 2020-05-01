@@ -1,5 +1,5 @@
 /*****************************************************************************
-*   Gnome Wave Cleaner Version 0.21
+*   GTK Wave Cleaner Version 0.21
 *   Copyright (C) 2001, 2002, 2003, 2004, 2005, 2006 Jeffrey J. Welty
 *   
 *   This program is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 #define __USE_ISOC99    1
 #include <math.h>
 
-#include <gnome.h>
+#include <gtk/gtk.h>
 #ifdef HAVE_FFTW3
 #include <fftw3.h>
 #if (FFTWPREC == 1)
@@ -49,7 +49,7 @@
 
 #define GWC_VERSION_MAJOR 0
 #define GWC_VERSION_MINOR 40
-#define VERSION "0.40.1"
+#define VERSION "0.41.0"
 #define GWC_POINT_HANDLE 0x01
 #define SBW  128	/* Sample Block Width, the number of audio sammples summarized in one block  */
 #define STATUS_UPDATE_INTERVAL 0.5	/* update status bar every 1/2  second on long edit operations */
@@ -94,10 +94,8 @@
 #define MARKER_RESET_VALUE -1000000000	/* (large negative long) markers to be completely
 					    off the screen when they are reset */
 
-struct common_prefs {
-    int window_width;
-    int window_height;
-};
+#define SETTINGS_FILE "gwc.conf"
+#define ACCELERATORS_FILE "accels"
 
 struct sound_prefs {
     int playback_bits ;
@@ -243,6 +241,8 @@ void adjust_marker_positions(long start, long delta);
 void move_song_marker(void) ;
 void delete_song_marker(void) ;
 void select_song_marker(void) ;
+GKeyFile* read_config(void) ;
+void write_config(GKeyFile *key_file) ;
 struct sound_prefs open_wavefile(char *filename, struct view *v) ;
 void pinknoise(struct sound_prefs *p, long first, long last, int channel_mask) ;
 int  pinknoise_dialog(struct sound_prefs current, struct view *) ;
@@ -272,7 +272,6 @@ int save_undo_data_remove(long first_sample, long last_sample, int status_update
 int save_undo_data_insert(long first_sample, long last_sample, int status_update_flag);
 void seek_to_audio_position(long playback_position) ;
 void set_options(GtkWidget * widget, gpointer data) ;
-void set_playback_cursor_position(struct view *v) ;
 long get_processed_samples(void);
 long get_processed_frames(void);
 long get_playback_position(void) ;

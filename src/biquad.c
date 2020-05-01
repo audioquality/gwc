@@ -1,5 +1,5 @@
 /*****************************************************************************
-*   Gnome Wave Cleaner Version 0.19
+*   GTK Wave Cleaner Version 0.19
 *   Copyright (C) 2001 Jeffrey J. Welty
 *   
 *   This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
 
 /* biquad.c */
 #include <stdlib.h>
-#include <gnome.h>
+#include <glib.h>
 #include "gwc.h"
 
 struct {
@@ -73,35 +73,40 @@ int filter2row(gint filter_type)
 
 void load_filter_preferences(void)
 {
+    filter_prefs.filter_type = 0;
+    filter_prefs.feather_width = 20;
+    filter_prefs.dbGain = 2;
+    filter_prefs.Fc = 120;
+    filter_prefs.bandwidth = 0.5;
+
+    GKeyFile  *key_file = read_config();
     int row ;
 
-    gnome_config_push_prefix(APPNAME"/filter_params/");
-
-    row = gnome_config_get_int("filter_type=0");
-    filter_prefs.filter_type = row2filter(row) ;
-
-    filter_prefs.feather_width = gnome_config_get_int("feather_width=20");
-    filter_prefs.dbGain = gnome_config_get_float("dbGain=2");
-    filter_prefs.Fc = gnome_config_get_float("Fc=120");
-    filter_prefs.bandwidth = gnome_config_get_float("bandwidth=0.5");
-
-    gnome_config_pop_prefix();
+    // We should probably have a separate test for each preference...
+    //if (g_key_file_get_string(key_file, "filter_params", "filter_type", NULL) != NULL) {
+    if (g_key_file_has_group(key_file, "filter_params") == TRUE) {
+        row = g_key_file_get_integer(key_file, "filter_params", "filter_type", NULL);
+        filter_prefs.filter_type = row2filter(row) ;
+        filter_prefs.feather_width = g_key_file_get_integer(key_file, "filter_params", "feather_width", NULL);
+        filter_prefs.dbGain = g_key_file_get_double(key_file, "filter_params", "dbGain", NULL);
+        filter_prefs.Fc = g_key_file_get_double(key_file, "filter_params", "Fc", NULL);
+        filter_prefs.bandwidth = g_key_file_get_double(key_file, "filter_params", "bandwidth", NULL);
+    }
+    g_key_file_free (key_file);
 }
 
 void save_filter_preferences(void)
 {
+    GKeyFile  *key_file = read_config();
     int row = filter2row(filter_prefs.filter_type) ;
 
-    gnome_config_push_prefix(APPNAME"/filter_params/");
+    g_key_file_set_integer(key_file, "filter_params", "filter_type", row) ;
+    g_key_file_set_integer(key_file, "filter_params", "feather_width", filter_prefs.feather_width);
+    g_key_file_set_double(key_file, "filter_params", "dbGain", filter_prefs.dbGain);
+    g_key_file_set_double(key_file, "filter_params", "Fc", filter_prefs.Fc);
+    g_key_file_set_double(key_file, "filter_params", "bandwidth", filter_prefs.bandwidth);
 
-    gnome_config_set_int("filter_type", row) ;
-    gnome_config_set_int("feather_width", filter_prefs.feather_width);
-    gnome_config_set_float("dbGain", filter_prefs.dbGain);
-    gnome_config_set_float("Fc", filter_prefs.Fc);
-    gnome_config_set_float("bandwidth", filter_prefs.bandwidth);
-
-    gnome_config_sync();
-    gnome_config_pop_prefix();
+    write_config(key_file);
 }
 
 

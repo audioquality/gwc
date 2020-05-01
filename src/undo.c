@@ -1,5 +1,5 @@
 /*****************************************************************************
-*   Gnome Wave Cleaner Version 0.19
+*   GTK Wave Cleaner Version 0.19
 *   Copyright (C) 2001 Jeffrey J. Welty
 *   
 *   This program is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ int get_undo_levels(void)
 
 int start_save_undo(char *undo_msg, struct view *v)
 {
-    char filename[PATH_MAX+1];
+    char filename[PATH_MAX+100];
     short l;
 
     if (strlen(tmpdir) == 0) {
@@ -208,7 +208,7 @@ int undo(struct view *v, struct sound_prefs *p)
     int n_sections ;
 #define N_ALLOC_INC 1000
     int n_sections_max = N_ALLOC_INC ;
-    char filename[PATH_MAX+1];
+    char filename[PATH_MAX+100];
     char strbuf[256];
     const int BLOCK_SIZE = 1024 ;
     char buf[BLOCK_SIZE * FRAMESIZE] ;
@@ -333,7 +333,7 @@ int undo(struct view *v, struct sound_prefs *p)
 
 void undo_purge(void)
 {
-    char filename[1024] ;
+    char filename[4200] ;
 
     while(undo_level>0) {
 	sprintf(filename, "%sgwc_undo_%d.dat", tmpdir, undo_level) ;

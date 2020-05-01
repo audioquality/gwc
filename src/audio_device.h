@@ -1,5 +1,5 @@
 /*****************************************************************************
-*   Gnome Wave Cleaner Version 0.19
+*   GTK Wave Cleaner Version 0.19
 *   Copyright (C) 2003 Jeffrey J. Welty
 *   
 *   This program is free software; you can redistribute it and/or

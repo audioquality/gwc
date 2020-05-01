@@ -51,7 +51,7 @@ This fork throws the non-essential features overboard and improves the usability
 
 **v0.30 branch**
 
-This branch contains a few fixes and improvements from the master branch, but also the old non-essential code, like the confusing ledbar, inferior batch functionality, and lossy compression support. Check out this branch, if you know what you are doing.
+This branch contains a few fixes and improvements from the master branch, but also the old non-essential code, like the confusing ledbar, inferior batch functionality, and lossy compression support. Check out this branch only if you know what you are doing.
 
 ## Installation
 
@@ -59,7 +59,7 @@ This is a Linux application, compiled and tested on Debian Linux 9 stretch. It s
 
 Install dependencies (Debian):
 
-    apt-get install libc6-dev libgnomeui-dev libgnome2-dev libfftw3-dev libsndfile1-dev libpulse-dev
+    apt-get install libc6-dev libfftw3-dev libsndfile1-dev libpulse-dev
     
 Download, Compile & Install:
 
@@ -101,9 +101,9 @@ If the menu icons are missing (disabled by default for GTK2 apps), they can be e
 |Edit -> Denoise             |**J**|
 |Edit -> Estimate Signal     |**K**|
 |Deselect All                |**Esc**|
-|View -> Select View         |__Num *__|
-|View -> Zoom In             |**Up** , **Num +**|
-|View -> Zoom Out            |**Down** , **Num -**|
+|View -> Select View         |__*__|
+|View -> Zoom In             |**Up** , **+**|
+|View -> Zoom Out            |**Down** , **-**|
 |View -> Zoom to All         |**\\**|
 |View -> Zoom to Selected    |**/**|
 |Markers -> Toggle beginning marker|**N**|
@@ -123,8 +123,8 @@ If the menu icons are missing (disabled by default for GTK2 apps), they can be e
 
 ### Mouse functions
 
-  * **Left Click**: Select audio section
-  * **Right Click**: Set the playback position & start playback
+  * **Left Click & Drag**: Select audio section
+  * **Right Click**: Start playback at that position
   * scrolling is currently not implemented, use keyboard arrows for navigation
 
 ### Menu

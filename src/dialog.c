@@ -1,5 +1,5 @@
 /*****************************************************************************
-*   Gnome Wave Cleaner Version 0.19
+*   GTK Wave Cleaner Version 0.19
 *   Copyright (C) 2001 Jeffrey J. Welty
 *   
 *   This program is free software; you can redistribute it and/or
@@ -18,10 +18,9 @@
 *******************************************************************************/
 
 /* dialog.c */
-/* utility routines to help with gnome dialog boxes */
+/* utility routines to help with dialog boxes */
 
 #include <stdlib.h>
-#include <libgnome/libgnome.h>
 #include "gwc.h"
 
 GtkWidget *add_number_entry_with_label(char *entry_text, char *label_text, GtkWidget *table,

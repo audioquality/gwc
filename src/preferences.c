@@ -1,5 +1,5 @@
 /*****************************************************************************
-*   Gnome Wave Cleaner Version 0.19
+*   GTK Wave Cleaner Version 0.19
 *   Copyright (C) 2001 Jeffrey J. Welty
 *   
 *   This program is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 /* preferences.c */
 /* preference settings for GWC */
 
-#include <gnome.h>
+#include <glib.h>
 #include <string.h>
 #include "gwc.h"
 
@@ -274,42 +274,57 @@ static int noise_suppression_method, window_type;
 
 void load_denoise_preferences(void)
 {
-    gnome_config_push_prefix(APPNAME"/denoise_params/");
-    denoise_prefs.n_noise_samples =
-	gnome_config_get_int("n_noise_samples=16");
-    denoise_prefs.smoothness = gnome_config_get_int("smoothness=11");
-    denoise_prefs.FFT_SIZE = gnome_config_get_int("FFT_SIZE=4096");
-    denoise_prefs.amount = gnome_config_get_float("amount=0.22");
-    denoise_prefs.dn_gamma = gnome_config_get_float("dn_gamma=0.8");
-    denoise_prefs.randomness = gnome_config_get_float("randomness=0.0");
-    denoise_prefs.window_type = gnome_config_get_int("window_type=2");
-    denoise_prefs.freq_filter = gnome_config_get_int("freq_filter=0");
-    denoise_prefs.estimate_power_floor = gnome_config_get_int("estimate_power_floor=0");
-    denoise_prefs.min_sample_freq = gnome_config_get_float("min_sample_freq=0.0");
-    denoise_prefs.max_sample_freq = gnome_config_get_float("max_sample_freq=44100.0");
-    denoise_prefs.noise_suppression_method = gnome_config_get_int("noise_suppression_method=3");
-    gnome_config_pop_prefix();
+    denoise_prefs.noise_suppression_method = 3 ;
+    denoise_prefs.window_type = 2 ;
+    denoise_prefs.smoothness = 11;
+    denoise_prefs.FFT_SIZE = 4096 ;
+    denoise_prefs.n_noise_samples = 16 ;
+    denoise_prefs.amount = 0.22 ;
+    denoise_prefs.dn_gamma = 0.8 ;
+    denoise_prefs.randomness = 0.0 ;
+    denoise_prefs.min_sample_freq = 0.0 ;
+    denoise_prefs.max_sample_freq = 44100.0 ;
+    denoise_prefs.freq_filter = 0 ;
+    denoise_prefs.estimate_power_floor = 0 ;
+
+    GKeyFile  *key_file = read_config();
+
+    if (g_key_file_has_group(key_file, "denoise_params") == TRUE) {
+        denoise_prefs.n_noise_samples = g_key_file_get_integer(key_file, "denoise_params", "n_noise_samples", NULL);
+        denoise_prefs.smoothness = g_key_file_get_integer(key_file, "denoise_params", "smoothness", NULL);
+        denoise_prefs.FFT_SIZE = g_key_file_get_integer(key_file, "denoise_params", "FFT_SIZE", NULL);
+        denoise_prefs.amount = g_key_file_get_double(key_file, "denoise_params", "amount", NULL);
+        denoise_prefs.dn_gamma = g_key_file_get_double(key_file, "denoise_params", "dn_gamma", NULL);
+        denoise_prefs.randomness = g_key_file_get_double(key_file, "denoise_params", "randomness", NULL);
+        denoise_prefs.window_type = g_key_file_get_integer(key_file, "denoise_params", "window_type", NULL);
+        denoise_prefs.freq_filter = g_key_file_get_integer(key_file, "denoise_params", "freq_filter", NULL);
+        denoise_prefs.estimate_power_floor = g_key_file_get_integer(key_file, "denoise_params", "estimate_power_floor", NULL);
+        denoise_prefs.min_sample_freq = g_key_file_get_double(key_file, "denoise_params", "min_sample_freq", NULL);
+        denoise_prefs.max_sample_freq = g_key_file_get_double(key_file, "denoise_params", "max_sample_freq", NULL);
+        denoise_prefs.noise_suppression_method = g_key_file_get_integer(key_file, "denoise_params", "noise_suppression_method", NULL);
+    }
+
+    g_key_file_free (key_file);
 }
 
 void save_denoise_preferences(void)
 {
-    gnome_config_push_prefix(APPNAME"/denoise_params/");
-    gnome_config_set_int("n_noise_samples", denoise_prefs.n_noise_samples);
-    gnome_config_set_int("smoothness", denoise_prefs.smoothness);
-    gnome_config_set_int("FFT_SIZE", denoise_prefs.FFT_SIZE);
-    gnome_config_set_float("amount", denoise_prefs.amount);
-    gnome_config_set_float("dn_gamma", denoise_prefs.dn_gamma);
-    gnome_config_set_float("randomness", denoise_prefs.randomness);
-    gnome_config_set_int("window_type", denoise_prefs.window_type);
+    GKeyFile  *key_file = read_config();
 
-    gnome_config_set_int("freq_filter", denoise_prefs.freq_filter);
-    gnome_config_set_int("estimate_power_floor", denoise_prefs.estimate_power_floor);
-    gnome_config_set_float("min_sample_freq", denoise_prefs.min_sample_freq);
-    gnome_config_set_float("max_sample_freq", denoise_prefs.max_sample_freq);
+    g_key_file_set_integer(key_file, "denoise_params", "n_noise_samples", denoise_prefs.n_noise_samples);
+    g_key_file_set_integer(key_file, "denoise_params", "smoothness", denoise_prefs.smoothness);
+    g_key_file_set_integer(key_file, "denoise_params", "FFT_SIZE", denoise_prefs.FFT_SIZE);
+    g_key_file_set_double(key_file, "denoise_params", "amount", denoise_prefs.amount);
+    g_key_file_set_double(key_file, "denoise_params", "dn_gamma", denoise_prefs.dn_gamma);
+    g_key_file_set_double(key_file, "denoise_params", "randomness", denoise_prefs.randomness);
+    g_key_file_set_integer(key_file, "denoise_params", "window_type", denoise_prefs.window_type);
+    g_key_file_set_integer(key_file, "denoise_params", "freq_filter", denoise_prefs.freq_filter);
+    g_key_file_set_integer(key_file, "denoise_params", "estimate_power_floor", denoise_prefs.estimate_power_floor);
+    g_key_file_set_double(key_file, "denoise_params", "min_sample_freq", denoise_prefs.min_sample_freq);
+    g_key_file_set_double(key_file, "denoise_params", "max_sample_freq", denoise_prefs.max_sample_freq);
+    g_key_file_set_integer(key_file, "denoise_params", "noise_suppression_method", denoise_prefs.noise_suppression_method);
 
-    gnome_config_set_int("noise_suppression_method", denoise_prefs.noise_suppression_method);
-    gnome_config_sync();
-    gnome_config_pop_prefix();
+    write_config(key_file);
 }
 
 
@@ -485,9 +500,6 @@ void denoise_set_preferences(GtkWidget * widget, gpointer data)
 	add_number_entry_with_label_int(denoise_prefs.max_sample_freq,
 					"Maximum frequency to use in noise sample (Hz)", dialog_table, 8);
 
-
-/*      combo_entry1 = gnome_number_entry_gtk_entry (GNOME_NUMBER_ENTRY (numberentry1));  */
-/*      gtk_widget_show (combo_entry1);  */
 
     gtk_box_pack_start(GTK_BOX(GTK_DIALOG(dlg)->vbox), dialog_table,
 		       TRUE, TRUE, 0);

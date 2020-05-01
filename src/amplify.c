@@ -1,5 +1,5 @@
 /*****************************************************************************
-*   Gnome Wave Cleaner Version 0.19
+*   GTK Wave Cleaner Version 0.19
 *   Copyright (C) 2001 Jeffrey J. Welty
 *   
 *   This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
 
 /* amplify.c */
 #include <stdlib.h>
-#include <gnome.h>
+#include <glib.h>
 #include "gwc.h"
 
 #define BUFSIZE 10000

@@ -1,5 +1,5 @@
 /*****************************************************************************
-*   Gnome Wave Cleaner Version 0.19
+*   GTK Wave Cleaner Version 0.19
 *   Copyright (C) 2003 Jeffrey J. Welty
 *   
 *   This program is free software; you can redistribute it and/or
@@ -212,13 +212,13 @@ int audio_device_write(unsigned char *data, int count)
 }
 
 /* Number of bytes processed since opening the device. */
+/* WARNING: rounded to number of frames written to the buffer */
 long query_processed_bytes(void)
 {
-    if(handle != NULL) {
-	snd_pcm_sframes_t avail_frames_in_buf = snd_pcm_avail_update(handle);
-	return snd_pcm_frames_to_bytes(handle, (written_frames - (buffer_total_frames - avail_frames_in_buf)));
+    if (handle != NULL) {
+        snd_pcm_sframes_t avail_frames_in_buf = snd_pcm_avail_update(handle);
+        return snd_pcm_frames_to_bytes(handle, (written_frames - (buffer_total_frames - avail_frames_in_buf)));
     }
-
     return 0 ;
 }
 

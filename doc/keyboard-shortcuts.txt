@@ -8,11 +8,11 @@ Edit -> Sample:           H
 Edit -> Denoise:          J
 Edit -> Estimate signal:  K
 
-View -> Zoom In:          Up, Num +
-View -> Zoom Out:         Down, Num -
+View -> Zoom In:          Up, +
+View -> Zoom Out:         Down, -
 View -> Zoom to Selected: /
 View -> Zoom to All:      \
-View -> Select All:       Num *
+View -> Select All:       *
 
 Markers -> toggle beginning marker: N
 Markers -> toggle end marker: M

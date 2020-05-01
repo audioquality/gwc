@@ -1,5 +1,5 @@
 /*****************************************************************************
-*   Gnome Wave Cleaner Version 0.19
+*   GTK Wave Cleaner Version 0.19
 *   Copyright (C) 2001 Jeffrey J. Welty
 *   
 *   This program is free software; you can redistribute it and/or
@@ -202,12 +202,13 @@ long get_processed_samples(void) {
  * return number of processed frames since opening the audio device
  */
 long get_processed_frames(void) {
-    return get_processed_samples() / MAX(1,(2 - stereo));
+    return get_processed_samples() / (stereo + 1);
 }
 
 /*
  * return playback position (current sample)
  */
+ /*
 long get_playback_position(void) {
   
   extern int audio_is_looping;
@@ -239,16 +240,7 @@ long get_playback_position(void) {
   
   return current_position;
 }
-
-/*
- * set cursor_position in audio_view structure to match the current playback position
- * called from gwc.c: play_a_block()
- */
-void set_playback_cursor_position(struct view *v)
-{
-    v->cursor_position = get_playback_position();
-    //d_print("set_playback_cursor_position: %ld\n", v->cursor_position);
-}
+*/
 
 /*
  * call single time, from gwc.c: start_gwc_playback()
@@ -284,12 +276,12 @@ long start_playback(char *output_device, struct view *v, struct sound_prefs *p, 
 
     playback_start_position = first;
     playback_end_position = last + 1;
+
     if ((playback_startplay_position < playback_start_position) || 
-        (playback_startplay_position >= (playback_end_position - 900)) ||
-	(playback_startplay_position > audio_view.last_sample)) {
+        (playback_startplay_position > audio_view.last_sample) ||
+        (playback_startplay_position >= (playback_end_position - 900))) {
       playback_startplay_position = playback_start_position;
     }
-	
     d_print("playback_startplay_position: %ld, start: %ld, end: %ld\n", playback_startplay_position, playback_start_position, playback_end_position);    
     
     samples_per_block = p->rate * seconds_per_block;
@@ -481,15 +473,15 @@ void stop_playback(unsigned int force)
     if ((get_processed_samples() == 0) && (!audio_is_looping)) {
       // The playback buffer is already empty. Since we cannot determine the proper playback position,
       // just assume the playback stopped at the end of the region_of_interest:
-      long first;
-      get_region_of_interest(&first, &playback_startplay_position, &audio_view);
+      long last;
+      get_region_of_interest(&playback_startplay_position, &last, &audio_view);
     } else {
-      playback_startplay_position = get_playback_position();
+      playback_startplay_position = audio_view.cursor_position;
     }
     
     if (force > 0)
       force = 1;
-    
+    /*
     if (!force) {
 	long new_playback = get_processed_samples();
 	long old_playback, cycles = 0;
@@ -513,12 +505,10 @@ void stop_playback(unsigned int force)
 	    }
 	}
     }
-
     usleep(100);
-    
     if (force)
 	d_print("stop_playback audio_device_close, force = 1\n");
-    
+    */
     audio_device_close(1-force) ;
     audio_state = AUDIO_IS_IDLE ;
 }
