@@ -301,21 +301,17 @@ int audio_area_button_event(GtkWidget *c, GdkEventButton *event, gpointer data)
 	long first, last;
 	get_region_of_interest(&first, &last, &audio_view);
 	
-	if ((new_position >= first) && (new_position < last)) {
-		playback_startplay_position = new_position;
-	} else if (new_position < first) {
-		playback_startplay_position = first;
+	if ((new_position < first) || (new_position > last)) {
+		// right-clicked outside of selection, deselect first
+		audio_view.selection_region = FALSE;
+		audio_view.channel_selection_mask = 0x03;
+		main_redraw(FALSE, TRUE);
 	}
-	if (new_position >= last) {
-	// we clicked behind the last selected position, leave playback stopped
-		audio_view.cursor_position = last;
-		main_redraw(TRUE, TRUE);
-	} else {
-		audio_view.cursor_position = playback_startplay_position;
-		main_redraw(TRUE, TRUE);
-		start_gwc_playback(NULL, NULL);
-		audio_is_looping = loop_playback;
-	}
+	playback_startplay_position = new_position;
+	audio_view.cursor_position = playback_startplay_position;
+	main_redraw(TRUE, TRUE);
+	start_gwc_playback(NULL, NULL);
+	audio_is_looping = loop_playback;
 	return 0;
     }
     
