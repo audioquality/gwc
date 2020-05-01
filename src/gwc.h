@@ -291,7 +291,7 @@ int start_save_undo(char *undo_msg, struct view *v) ;
 void sum_sample_block(struct sample_block *sb, fftw_real left[], fftw_real right[], long n) ;
 int undo(struct view *v, struct sound_prefs *p) ;
 void undo_purge(void) ;
-void update_status_bar(gfloat percentage, gfloat min_delta, gboolean init_flag) ;
+void update_progress_bar(gfloat percentage, gfloat min_delta, gboolean init_flag) ;
 int yesno(char *) ;
 int yesnocancel(char *) ;
 void warning(char *) ;

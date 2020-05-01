@@ -59,7 +59,7 @@ This is a Linux application, compiled and tested on Debian Linux 9 stretch. It s
 
 Install dependencies (Debian):
 
-    apt-get install libc6-dev libfftw3-dev libsndfile1-dev libpulse-dev libmeschach-dev
+    apt-get install libc6-dev libgtk-2.0-dev libfftw3-dev libsndfile1-dev libasound-dev libmeschach-dev
     
 Download, Compile & Install:
 

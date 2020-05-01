@@ -590,7 +590,7 @@ void save_as_wavfile(char *filename_new, long first_sample, long last_sample)
 	unsigned char buf[TMPBUFSIZE] ;
 	long framebufsize = (TMPBUFSIZE/FRAMESIZE) * FRAMESIZE ;
 
-	update_status_bar(0.0,STATUS_UPDATE_INTERVAL,TRUE) ;
+	update_progress_bar(0.0,STATUS_UPDATE_INTERVAL,TRUE) ;
 
 	for(n_copied = 0 ; n_copied < total_bytes ; n_copied += framebufsize) {
 	    long n_to_copy = framebufsize ;
@@ -599,7 +599,7 @@ void save_as_wavfile(char *filename_new, long first_sample, long last_sample)
 	    usleep(2) ; // prevents segfault on OSX, who knows, something to do with status bar update...
 #endif
 
-	    update_status_bar((gfloat)(n_copied)/(gfloat)(total_bytes),STATUS_UPDATE_INTERVAL,FALSE) ;
+	    update_progress_bar((gfloat)(n_copied)/(gfloat)(total_bytes),STATUS_UPDATE_INTERVAL,FALSE) ;
 
 	    if(n_copied + n_to_copy > total_bytes) n_to_copy = total_bytes - n_copied ;
 
@@ -609,7 +609,7 @@ void save_as_wavfile(char *filename_new, long first_sample, long last_sample)
 
     }
 
-    update_status_bar((gfloat)0.0,STATUS_UPDATE_INTERVAL,TRUE) ;
+    update_progress_bar((gfloat)0.0,STATUS_UPDATE_INTERVAL,TRUE) ;
 
     sf_close(sndfile_new) ;
 

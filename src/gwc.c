@@ -134,7 +134,7 @@ gint window_y;
 gint window_width = 1200;
 gint window_height = 800;
 gboolean window_maximised;
-gint doing_statusbar_update = FALSE;
+gint doing_progressbar_update = FALSE;
 guint status_message, push_message;
 
 DENOISE_DATA denoise_data = { 0, 0, 0, 0, FALSE };
@@ -1766,7 +1766,7 @@ void about(GtkWidget * widget, gpointer data)
 
 void main_redraw(int cursor_flag, int redraw_data)
 {
-    if (doing_statusbar_update == TRUE)
+    if (doing_progressbar_update == TRUE)
         return;
 
     if (file_is_open == TRUE)
@@ -2152,41 +2152,37 @@ static const char *ui_description =
 "  </toolbar>"
 "</ui>";
 
-void update_status_bar(gfloat percentage, gfloat min_delta,
-                   gboolean init_flag)
+void update_progress_bar(gfloat percentage, gfloat min_delta,
+       gboolean init_flag)
 {
 #ifdef BY_DATA_LENGTH
     static gfloat last_percentage_displayed = -1.0;
 
-    if (percentage - last_percentage_displayed > min_delta
-        || init_flag == TRUE) {
-        doing_statusbar_update = TRUE;
-        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), percentage);
+    if (percentage - last_percentage_displayed > min_delta || init_flag == TRUE) {
+        doing_progressbar_update = TRUE;
+        gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(progress_bar), percentage);
         gtk_flush();
-        doing_statusbar_update = FALSE;
+        doing_progressbar_update = FALSE;
         last_percentage_displayed = percentage;
     }
 #else
-    static struct timeval last_displayed = { 0, 0 };
+    static struct timeval this, last_displayed = { 0, 0 };
     static struct timezone tz = { 0, 0 };
-    static struct timeval this;
     long delta_ms;
 
     gettimeofday(&this, &tz);
 
-    delta_ms =
-        (this.tv_sec - last_displayed.tv_sec) * 1000 + (this.tv_usec -
-                                                        last_displayed.
-                                                        tv_usec) / 1000;
+    delta_ms = (this.tv_sec*1000 + this.tv_usec/1000) -
+               (last_displayed.tv_sec*1000 + last_displayed.tv_usec/1000);
 
     if (delta_ms > 1000 * min_delta || init_flag == TRUE) {
-        doing_statusbar_update = TRUE;
-        gtk_progress_bar_set_fraction(GTK_PROGRESS_BAR(progress_bar), percentage);
+        doing_progressbar_update = TRUE;
+        gtk_progress_bar_set_fraction (GTK_PROGRESS_BAR(progress_bar), percentage);
         gtk_flush();
-        doing_statusbar_update = FALSE;
+        doing_progressbar_update = FALSE;
         last_displayed = this;
     }
-    #endif
+#endif
 }
 
 void set_status_text(gchar * msg)
@@ -2508,6 +2504,8 @@ int main(int argc, char *argv[])
     gtk_box_pack_start(GTK_BOX(bottom_hbox), track_times_vbox, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(bottom_hbox), times_vbox, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(main_vbox), bottom_hbox, FALSE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(status_bar), GTK_WIDGET(progress_bar), TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(main_vbox), GTK_WIDGET(status_bar), FALSE, TRUE, 0);
 
     detect_only_box = gtk_hbox_new(FALSE, 10);
     detect_only_widget = gtk_check_button_new_with_label("Detect, do not repair clicks");

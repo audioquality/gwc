@@ -501,7 +501,7 @@ void draw_sonogram(struct view *v, struct sound_prefs *pPrefs, GtkWidget *da, do
     int index_20Hz;
 
     push_status_text("Building sonogram") ;
-    update_status_bar(0.0,STATUS_UPDATE_INTERVAL,TRUE) ;
+    update_progress_bar(0.0,STATUS_UPDATE_INTERVAL,TRUE) ;
 
 
     /* only draw the sonogram at a scale of 1.0 */
@@ -577,7 +577,7 @@ ly2_tbl[0] = 99999999;
 
     for(x = 0 ; x < v->canvas_width ; x++) {
 
-        update_status_bar((double) x / v->canvas_width,STATUS_UPDATE_INTERVAL,FALSE) ;
+        update_progress_bar((double) x / v->canvas_width,STATUS_UPDATE_INTERVAL,FALSE) ;
 
 	sample = pixel_to_sample(&audio_view, x) ;
 
@@ -819,7 +819,7 @@ ly2_tbl[0] = 99999999;
     rfftw_destroy_plan(p);
 #endif /* HAVE_FFTW3 */
 
-    update_status_bar(0.0,STATUS_UPDATE_INTERVAL,TRUE) ;
+    update_progress_bar(0.0,STATUS_UPDATE_INTERVAL,TRUE) ;
     pop_status_text();
 
 #ifdef TEST_DRAW_CLICK_FINDER
