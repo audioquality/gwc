@@ -146,7 +146,7 @@ static int save_undo_data_impl(long first_sample, long last_sample,
 
     if (undo_type != UNDO_INSERT) {
       if(status_update_flag)
-	  update_status_bar(0.0, STATUS_UPDATE_INTERVAL, TRUE) ;
+	  update_progress_bar(0.0, STATUS_UPDATE_INTERVAL, TRUE) ;
 
       //long blocks = (last_sample - first_sample + 1) / BLOCK_SIZE;
 
@@ -155,7 +155,7 @@ static int save_undo_data_impl(long first_sample, long last_sample,
 	  gfloat p = (gfloat)(curr-first_sample)/n_sample ;
 
 	  if(status_update_flag)
-	      update_status_bar(p,STATUS_UPDATE_INTERVAL,FALSE) ;
+	      update_progress_bar(p,STATUS_UPDATE_INTERVAL,FALSE) ;
 
 	  end = curr + BLOCK_SIZE - 1;
 	  if (end > last_sample)
@@ -169,7 +169,7 @@ static int save_undo_data_impl(long first_sample, long last_sample,
     }
 
     if(status_update_flag)
-	update_status_bar(0.0, STATUS_UPDATE_INTERVAL, TRUE) ;
+	update_progress_bar(0.0, STATUS_UPDATE_INTERVAL, TRUE) ;
 
     return 0 ;
 }
@@ -230,7 +230,7 @@ int undo(struct view *v, struct sound_prefs *p)
     }
 
     push_status_text("Performing Undo") ;
-    update_status_bar(0.0, STATUS_UPDATE_INTERVAL, TRUE) ;
+    update_progress_bar(0.0, STATUS_UPDATE_INTERVAL, TRUE) ;
 
     read(undo_fd, (char *)&l, sizeof(l)) ;
 
@@ -290,7 +290,7 @@ int undo(struct view *v, struct sound_prefs *p)
               long end;
 	    gfloat p = (gfloat)(curr-first_sample)/(last_sample - first_sample) * (total_sections - n_sections) / total_sections ;
 
-	    update_status_bar(p,STATUS_UPDATE_INTERVAL,FALSE) ;
+	    update_progress_bar(p,STATUS_UPDATE_INTERVAL,FALSE) ;
 
             end = curr + BLOCK_SIZE - 1;
             if (end > last_sample)
@@ -325,7 +325,7 @@ int undo(struct view *v, struct sound_prefs *p)
     undo_fd = -1 ;
     undo_level-- ;
 
-    update_status_bar(0.0, STATUS_UPDATE_INTERVAL, TRUE) ;
+    update_progress_bar(0.0, STATUS_UPDATE_INTERVAL, TRUE) ;
     pop_status_text();
 
     return undo_level ;

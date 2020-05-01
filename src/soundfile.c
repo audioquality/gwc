@@ -85,7 +85,7 @@ int soundfile_save_file(char *filename, long lpos, long lsample_count,
 
                     processed += buffer_size;
                     if (status_info)
-                        update_status_bar((gfloat)processed/sample_count,
+                        update_progress_bar((gfloat)processed/sample_count,
                                           STATUS_UPDATE_INTERVAL, FALSE);
                 }
 
@@ -133,7 +133,7 @@ int soundfile_load_file(char *filename, long lpos, long lsample_count,
 
                     processed += buffer_size;
                     if (status_info)
-                        update_status_bar((gfloat)processed/sample_count,
+                        update_progress_bar((gfloat)processed/sample_count,
                                           STATUS_UPDATE_INTERVAL, FALSE);
                 }
 
@@ -279,7 +279,7 @@ int soundfile_shift_samples_right(long lfirst_pos, long lsample_count,
 
             processed += buffer_size;
             if (status_info)
-                update_status_bar((gfloat)processed/(end_pos-first_pos),
+                update_progress_bar((gfloat)processed/(end_pos-first_pos),
                                   STATUS_UPDATE_INTERVAL, FALSE);
 
 /*             printf("soundfile_shift_samples_right: processed=%lld (%f.2)\n", */
@@ -358,7 +358,7 @@ int soundfile_shift_samples_left(long lfirst_pos, long lsample_count,
             processed += buffer_size;
 
             if (status_info)
-                update_status_bar((gfloat)processed/(end_pos-first_pos-sample_count),
+                update_progress_bar((gfloat)processed/(end_pos-first_pos-sample_count),
                                   STATUS_UPDATE_INTERVAL, FALSE);
 
 /*             printf("soundfile_shift_samples_left: processed=%lld (%f.2)\n", */
