@@ -1,4 +1,4 @@
-# Gnome Wave Cleaner
+# GTK Wave Cleaner
 
 ![](doc/gwc.png)
 
@@ -59,17 +59,18 @@ This is a Linux application, compiled and tested on Debian Linux 9 stretch. It s
 
 Install dependencies (Debian):
 
-    apt-get install libc6-dev libgtk-2.0-dev libfftw3-dev libsndfile1-dev libasound-dev libmeschach-dev
+    apt-get install autoconf automake libc6-dev libgtk-2.0-dev libfftw3-dev libsndfile1-dev libasound-dev libmeschach-dev
     
 Download, Compile & Install:
 
     git clone https://github.com/audioquality/gwc.git
     cd gwc/src
+    aclocal && autoconf && automake --add-missing
     ./configure
     make
     make install
 
-The program shortcut is in _Menu->Multimedia->Gnome Wave Cleaner_ , or run in terminal:
+The program shortcut is in _Menu->Multimedia->Gtk Wave Cleaner_ , or run in terminal:
 
     gwc
 

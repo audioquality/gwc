@@ -33,7 +33,7 @@
  *    IEEE      0,30        30000       5.8e-16     1.4e-16
  *
  */
-/*							i0e.c
+/*							i0e.c
  *
  *	Modified Bessel function of order zero,
  *	exponentially scaled
@@ -65,7 +65,6 @@
  * See i0().
  *
  */
-
 /*							i0.c		*/
 
 

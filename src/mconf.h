@@ -60,7 +60,6 @@
 Cephes Math Library Release 2.3:  June, 1995
 Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 */
-
 
 /* Define if the `long double' type works.  */
 #define HAVE_LONG_DOUBLE 1
@@ -85,10 +84,10 @@ Copyright 1984, 1987, 1989, 1995 by Stephen L. Moshier
 #define HAVE_STRING_H 1
 
 /* Name of package */
-#define PACKAGE "cephes"
+//#define PACKAGE "cephes"
 
 /* Version number of package */
-#define VERSION "2.7"
+//#define VERSION "2.7"
 
 /* Constant definitions for math error conditions
  */

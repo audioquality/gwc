@@ -34,7 +34,7 @@
  *
  *
  */
-/*							i1e.c
+/*							i1e.c
  *
  *	Modified Bessel function of order one,
  *	exponentially scaled
@@ -66,7 +66,6 @@
  * See i1().
  *
  */
-
 /*							i1.c 2		*/
 
 
@@ -233,7 +232,7 @@ static unsigned short A[] = {
 0x3fd0,0x2a63,0x724a,0x7ffa
 };
 #endif
-
+
 /*							i1.c	*/
 
 /* Chebyshev coefficients for exp(-x) sqrt(x) I1(x)
@@ -362,7 +361,7 @@ static unsigned short B[] = {
 0x3fe8,0xea18,0xb55b,0x1514
 };
 #endif
-
+
 /*							i1.c	*/
 #ifdef ANSIPROT
 extern double chbevl ( double, void *, int );
@@ -392,7 +391,7 @@ if( x < 0.0 )
 	z = -z;
 return( z );
 }
-
+
 /*							i1e()	*/
 
 double i1e( x )

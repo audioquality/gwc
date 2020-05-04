@@ -48,7 +48,8 @@
 #endif
 
 #define GWC_VERSION_MAJOR 0
-#define GWC_VERSION_MINOR 40
+#define GWC_VERSION_MINOR 41
+#define APPNAME "gwc"
 #define VERSION "0.41.0"
 #define GWC_POINT_HANDLE 0x01
 #define SBW  128	/* Sample Block Width, the number of audio sammples summarized in one block  */
