@@ -40,8 +40,7 @@ char *cdtext_data = NULL;
 
 /* The file selection widget and the string to store the chosen filename */
 
-GtkWidget *file_selector;
-gchar *selected_filename;
+extern GtkWidget *file_selector;
 gchar save_cdrdao_toc_filename[255] ;
 extern long num_song_markers, song_markers[] ;
 extern gchar wave_filename[] ;
