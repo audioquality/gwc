@@ -1,7 +1,7 @@
 AUTOMAKE_OPTIONS = foreign
 
 # what flags you want to pass to the C compiler & linker
-CFLAGS = -Wall -g -O6 -D_FILE_OFFSET_BITS=64 -D_REENTRANT
+CFLAGS = -Wall -Wno-deprecated-declarations -g -O6 -D_FILE_OFFSET_BITS=64 -D_REENTRANT
 
 # this lists the binaries to produce, the (non-PHONY, binary) targets in
 # the previous manual Makefile
