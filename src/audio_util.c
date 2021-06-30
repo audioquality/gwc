@@ -155,7 +155,7 @@ int config_audio_device(int rate_set, int bits_set, int stereo_set)
 
     if(format != format_set) {
 	char *buf_fmt_str ;
-	char buf[85] ;
+	char buf[200] ;
 	switch(format_set) {
 	    case GWC_U8 : buf_fmt_str = "8 bit (unsigned)" ; bits_set = 8 ; break ;
 	    case GWC_S8 : buf_fmt_str = "8 bit (signed)" ; bits_set = 8 ; break ;
@@ -169,7 +169,7 @@ int config_audio_device(int rate_set, int bits_set, int stereo_set)
     }
 
     if(channels < stereo + 1) {
-	char buf[100] ;
+	char buf[200] ;
 	snprintf(buf, sizeof(buf), "Failed to set stereo mode\nYour sound card may not support stereo\n") ;
 	warning(buf) ;
 	printf(buf);
@@ -178,9 +178,9 @@ int config_audio_device(int rate_set, int bits_set, int stereo_set)
     //stereo_set = channels - 1 ;
 
     if(ABS(rate_set - rate) > 10) {
-	char buf[80] ;
-	snprintf(buf, sizeof(buf), "Rate set to %d instead of %d\nYour sound card may not support the desired rate\n",
-	             rate_set, rate) ;
+	char buf[200] ;
+	snprintf(buf, sizeof(buf), "Rate is %d instead of the required %d.\nYour sound card may not support the desired rate\n",
+	             rate, rate_set) ;
 	warning(buf) ;
 	printf(buf);
     }
@@ -710,7 +710,7 @@ struct sound_prefs open_wavefile(char *filename, struct view *v)
 
 	/* do some simple error checking on the wavfile header , so we don't seek data where it isn't */
 	if(wfh.n_samples < 2) {
-	    char tmp[140] ;
+	    char tmp[200] ;
 	    snprintf(tmp, sizeof(tmp), "Audio file is possibly corrupt, only %ld samples reported by audio header", wfh.n_samples) ;
 	    info(tmp) ;
 	    if(sndfile != NULL) {
@@ -811,7 +811,7 @@ int read_wavefile_data(long left[], long right[], long first, long last)
 	}
 
 	if(n_read == 0) {
-	    char tmp[100] ;
+	    char tmp[200] ;
 	    snprintf(tmp, sizeof(tmp), "Attempted to read past end of audio, first=%ld, last=%ld", first, last) ;
 	    warning(tmp) ;
 	    exit(1) ;
@@ -864,7 +864,7 @@ int read_fft_real_wavefile_data(fftw_real left[], fftw_real right[], long first,
 	    }
 
 	    if(n_read == 0) {
-		char tmp[100] ;
+		char tmp[200] ;
 		snprintf(tmp, sizeof(tmp), "read_fft_real Attempted to read past end of audio, first=%ld, last=%ld", first, last) ;
 		warning(tmp) ;
 		//exit(1) ;
@@ -888,7 +888,7 @@ int read_fft_real_wavefile_data(fftw_real left[], fftw_real right[], long first,
 	    }
 
 	    if(n_read == 0) {
-		char tmp[100] ;
+		char tmp[200] ;
 		snprintf(tmp, sizeof(tmp), "Attempted to read past end of audio, first=%ld, last=%ld", first, last) ;
 		warning(tmp) ;
 		exit(1) ;
@@ -928,7 +928,7 @@ int read_float_wavefile_data(float left[], float right[], long first, long last)
 	}
 
 	if(n_read == 0) {
-	    char tmp[100] ;
+	    char tmp[200] ;
 	    snprintf(tmp, sizeof(tmp), "Attempted to read past end of audio, first=%ld, last=%ld", first, last) ;
 	    warning(tmp) ;
 	    exit(1) ;
