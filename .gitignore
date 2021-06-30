@@ -11,6 +11,7 @@ config.status
 depcomp
 install-sh
 missing
+noise.dat
 *.o
 *.a
 *.rej

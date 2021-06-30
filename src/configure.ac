@@ -12,7 +12,7 @@ AC_PROG_INSTALL
 AC_PROG_MAKE_SET
 
 # Checks for libraries.
-AC_CHECK_LIB([m], [main], [#], [echo "ERROR: missing library"; exit 1])
+AC_CHECK_LIB([m], [cos], [#], [echo "ERROR: missing library"; exit 1])
 AC_CHECK_LIB([pthread], [main], [#], [echo "ERROR: missing library"; exit 1])
 AC_CHECK_LIB([gtk-x11-2.0], [gtk_init], [#], [echo "ERROR: missing library"; exit 1])
 AC_CHECK_LIB([fftw3], [fftw_execute], [#], [echo "ERROR: missing library"; exit 1])
